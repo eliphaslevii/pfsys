@@ -1,59 +1,73 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Projeto [BSYS] - Servidor Auxiliar de Processos (Pferd Brasil)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este repositório contém o código-fonte do Projeto [BSYS], uma aplicação Laravel destinada a servir como "app auxiliar" para a automação de processos internos e melhoria de workflows na Pferd Brasil.
 
-## About Laravel
+Este projeto é a reformulação técnica do conceito original (pfsyst), construído sobre uma infraestrutura moderna, segura e auditável (o servidor pfServer).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Autor: Luiz Cesar (Salah Al Din)
+Status: Em Desenvolvimento (Refatoração)
+Repositório: https://github.com/eliphaslevii/pfsys.git
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Stack Tecnológico
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Esta aplicação roda sobre uma infraestrutura definida e provisionada em pfServer (Ubuntu 22.04 LTS).
 
-## Learning Laravel
+O stack de software é:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Servidor OS: Ubuntu Server 22.04 LTS (Headless)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Web Server: Nginx
 
-## Laravel Sponsors
+Banco de Dados: MySQL Server 8.0
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+PHP: PHP 8.2-FPM (via ppa:ondrej/php)
 
-### Premium Partners
+Framework: Laravel (v11+)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Firewall: UFW (Uncomplicated Firewall)
 
-## Contributing
+2. Workflow de Desenvolvimento
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+O desenvolvimento neste projeto segue um workflow padrão para garantir a segurança e a integridade do código.
 
-## Code of Conduct
+Acesso ao Ambiente
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+O ambiente de desenvolvimento (pfServer) não é acessado por IP (frágil). O acesso é feito por nome (abstração) para garantir portabilidade.
 
-## Security Vulnerabilities
+PC Host (Windows/Linux): O arquivo hosts local é editado para mapear o IP da VM:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+192.168.0.96   bsys.local (Exemplo)
 
-## License
+Acesso ao Site: O site é acessado localmente via:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+http://bsys.local
+
+Edição e Código
+
+O código é editado remotamente, não diretamente no terminal do servidor.
+
+Editor: Visual Studio Code (VS Code) no PC Host.
+
+Conexão: Extensão "Remote - SSH" (Microsoft).
+
+Workflow: O VS Code conecta-se via SSH ao pfServer e abre a pasta /var/www/bsys diretamente, unindo o poder do editor local com os arquivos no servidor.
+
+Versionamento
+
+O código é versionado no GitHub (pfsys.git) usando um Personal Access Token (PAT) com permissão repo.
+
+Segredos: O arquivo .env (credenciais) é bloqueado pelo .gitignore.
+
+Dependências: A pasta vendor (pacotes do Composer) é bloqueada pelo .gitignore.
+
+3. Scripts de Provisionamento (Infra-as-Code)
+
+A infraestrutura deste servidor é documentada e gerenciada por scripts de provisionamento localizados no diretório home (~) do pfServer. Eles garantem que a infraestrutura seja replicável e auditável.
+
+provision.sh: Provisiona o Ubuntu com Nginx, MySQL, PHP 8.2, UFW e Git.
+
+setup_database.sh: Script interativo e seguro para criar novos bancos de dados e usuários MySQL (sem armazenar senhas).
+
+create_site.sh: Script interativo para criar e ativar novos server blocks (sites) no Nginx, testando a sintaxe (nginx -t) e fazendo rollback em caso de falha.
+
+fix_permissions.sh: Script interativo para aplicar as permissões de arquivo do Laravel (chown $USER, chgrp www-data, chmod ug+rwx storage).
