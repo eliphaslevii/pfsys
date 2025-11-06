@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $this->call(SectorSeeder::class); 
+        // 2. Permissões (Permissions)
+        $this->call(PermissionSeeder::class);
+        // 3. Níveis (Levels) - Depende de Setores e Permissões
+        $this->call(LevelSeeder::class);
+
+        // Opcional: Adicionar Usuário de Teste (Super Admin)
+        $this->call(UserSeeder::class); 
     }
 }
