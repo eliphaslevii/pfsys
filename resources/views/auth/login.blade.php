@@ -1,37 +1,5 @@
 <x-guest-layout>
-    <style>
-        body {
-            background: url('{{ asset('images/bg.jpg') }}') no-repeat center center fixed;
-            background-size: cover;
-            position: relative;
-        }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45); /* overlay escuro */
-            backdrop-filter: blur(3px); /* efeito vidro, sutil */
-            z-index: 0;
-        }
-
-        .login-container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-        }
-    </style>
     <form class="card card-md" method="POST" action="{{ route('login') }}">
         @csrf
         <div class="card-body">
