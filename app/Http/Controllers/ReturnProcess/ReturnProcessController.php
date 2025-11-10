@@ -7,12 +7,38 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\ProcessType;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ReturnProcess;
+use Illuminate\Support\Facades\DB;
 
 class ReturnProcessController extends AjaxController
 {
     public function index()
     {
-        return view('returnProcess.index');
+        // 🔹 Garante que o tipo 'Devolução / Recusa' existe
+        $processType = ProcessType::where('name', 'Devolução / Recusa')->first();
+
+        // Caso não exista ainda, cria automaticamente
+        if (!$processType) {
+            $processType = ProcessType::create([
+                'name' => 'Devolução / Recusa',
+                'description' => 'Processos de devolução e recusa de mercadorias',
+            ]);
+        }
+
+        // 🔹 Filtra os processos desse tipo
+        $processes = ReturnProcess::where('process_type_id', $processType->id)
+            ->latest()
+            ->get();
+
+        // 🔹 Estatísticas básicas
+        $stats = [
+            'total' => $processes->count(),
+            'approved' => $processes->where('status', 'Aprovado')->count(),
+            'pending' => $processes->where('status', 'Aberto')->count(),
+            'rejected' => $processes->where('status', 'Recusado')->count(),
+        ];
+
+        return view('returnProcess.index', compact('stats', 'processes'));
     }
 
     public function create()
@@ -35,34 +61,20 @@ class ReturnProcessController extends AjaxController
                 'itens' => 'required|string',
             ]);
 
-            // 🔎 Busca o tipo de processo ("Recusa" / "Devolução")
-            $processType = ProcessType::where('name', $validated['tipo'])->first();
+            // 🔹 Busca ou cria o tipo de processo
+            $processType = ProcessType::firstOrCreate(
+                ['name' => $validated['tipo']],
+                ['description' => "Tipo criado automaticamente pelo sistema."]
+            );
 
-            if (!$processType) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Tipo de processo '{$validated['tipo']}' não encontrado em process_types."
-                ], 422);
-            }
+            // 👤 Usuário logado ou fallback
+            $userId = Auth::id() ?? 1;
 
             // 📄 Salva o XML (opcional)
             $xmlPath = null;
             if ($request->hasFile('xml_file')) {
                 $xmlPath = $request->file('xml_file')->store('processes/xmls', 'public');
             }
-
-            // 👤 Usuário logado
-            $userId = Auth::id() ?? 1; // fallback se estiver testando sem login
-
-            // 💾 Cria o processo principal
-            // 🔎 Busca o tipo de processo (Recusa / Devolução)
-            $processType = \App\Models\ProcessType::firstOrCreate(
-                ['name' => $validated['tipo']],
-                ['description' => "Tipo criado automaticamente pelo sistema."]
-            );
-
-            // 👤 Usuário logado ou fallback
-            $userId = \Illuminate\Support\Facades\Auth::id() ?? 1; // usa ID 1 se for teste local sem login
 
             // 💾 Cria o processo principal
             $process = \App\Models\Process::create([
@@ -75,8 +87,7 @@ class ReturnProcessController extends AjaxController
                 'movimentacao_mercadoria' => false,
             ]);
 
-
-            // 💾 Salva itens (JSON → array)
+            // 💾 Cria os itens vinculados
             $itens = json_decode($validated['itens'], true);
             foreach ($itens as $item) {
                 $process->items()->create([
@@ -98,9 +109,26 @@ class ReturnProcessController extends AjaxController
                 ]);
             }
 
+            /**
+             * 🚀 Criação automática da execução (process_executions)
+             */
+            $firstStep = \App\Models\ProcessWorkflow::where('process_type_id', $processType->id)
+                ->orderBy('id', 'asc')
+                ->first();
+
+            if ($firstStep) {
+                \App\Models\ProcessExecution::create([
+                    'process_id' => $process->id,
+                    'current_workflow_id' => $firstStep->id,
+                    'assigned_to' => $userId,
+                    'status' => 'Em Andamento',
+                    'observations' => 'Execução inicial do processo criada automaticamente.',
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Processo salvo com sucesso!',
+                'message' => 'Processo e execução inicial criados com sucesso!',
                 'id' => $process->id
             ]);
 
@@ -121,7 +149,6 @@ class ReturnProcessController extends AjaxController
     {
         return view('returnProcess.show', ['id' => $id]);
     }
-
     public function reject($id, Request $request): JsonResponse
     {
         return $this->ajaxResponse(true, 'Processo recusado com sucesso!');
@@ -131,4 +158,37 @@ class ReturnProcessController extends AjaxController
     {
         return $this->ajaxResponse(true, 'Processo excluído com sucesso!');
     }
+    public function getProcessesData()
+    {
+        try {
+            $processes = DB::table('processes')
+                ->join('process_types', 'processes.process_type_id', '=', 'process_types.id')
+                ->leftJoin('process_workflows', 'processes.current_workflow_id', '=', 'process_workflows.id')
+                ->leftJoin('users', 'processes.created_by', '=', 'users.id')
+                ->select(
+                    'processes.id',
+                    'process_types.name as tipo',
+                    'processes.status',
+                    'processes.cliente_nome as nomeCliente',
+                    'processes.cliente_cnpj as cnpjCliente',
+                    'processes.observacoes',
+                    'process_workflows.step_name as step',
+                    'users.name as responsavelInterno',
+                    'processes.created_at'
+                )
+                ->orderByDesc('processes.id')
+                ->get();
+
+            return response()->json(['data' => $processes]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao carregar dados dos processos.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }

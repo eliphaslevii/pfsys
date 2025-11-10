@@ -15,7 +15,7 @@ class SectorSeeder extends Seeder
             ['name' => 'Fiscal', 'description' => 'Responsável pela parte fiscal e emissão de notas.'],
             ['name' => 'Financeiro', 'description' => 'Contas a pagar e faturamento.'],
             ['name' => 'Gerência de Produtos', 'description' => 'Controle de produtos e planejamento.'],
-            ['name' => 'Administração', 'description' => 'Setor administrativo com acesso total.'],
+            ['name' => 'Administrativo', 'description' => 'Setor administrativo com acesso total.'],
         ];
 
         foreach ($sectors as $sector) {

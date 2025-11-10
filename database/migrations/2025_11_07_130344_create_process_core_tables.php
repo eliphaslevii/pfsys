@@ -4,13 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
-        /**
-         * 1️⃣ Tipos de Processo (Recusa, Devolução, etc.)
-         */
         Schema::create('process_types', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100)->unique();
@@ -20,7 +16,7 @@ return new class extends Migration
         });
 
         /**
-         * 5️⃣ Workflow (etapas e quem pode atuar)
+         * 2️⃣ Workflow (etapas e quem pode atuar)
          */
         Schema::create('process_workflows', function (Blueprint $table) {
             $table->id();
@@ -33,7 +29,7 @@ return new class extends Migration
         });
 
         /**
-         * 2️⃣ Processos principais
+         * 3️⃣ Processos principais
          */
         Schema::create('processes', function (Blueprint $table) {
             $table->id();
@@ -52,7 +48,7 @@ return new class extends Migration
         });
 
         /**
-         * 3️⃣ Itens do processo (produtos, quantidades, preços, etc.)
+         * 4️⃣ Itens do processo (produtos, quantidades, preços, etc.)
          */
         Schema::create('process_items', function (Blueprint $table) {
             $table->id();
@@ -66,7 +62,7 @@ return new class extends Migration
         });
 
         /**
-         * 4️⃣ Documentos anexados (XML, PDFs, imagens, etc.)
+         * 5️⃣ Documentos anexados (XML, PDFs, imagens, etc.)
          */
         Schema::create('process_documents', function (Blueprint $table) {
             $table->id();
@@ -92,7 +88,23 @@ return new class extends Migration
         });
 
         /**
-         * 7️⃣ Regras especiais do processo (validações ou fluxos condicionais)
+         * 7️⃣ Controle real do processo (andamento / steps executados)
+         */
+        Schema::create('process_steps', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('process_id')->constrained('processes')->onDelete('cascade');
+            $table->foreignId('workflow_id')->nullable()->constrained('process_workflows')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('status', 50)->default('Pendente'); // Pendente, Aprovado, Rejeitado, Em análise
+            $table->string('action', 100)->nullable(); // Ex: "Aprovação", "Correção", etc.
+            $table->text('comments')->nullable();
+            $table->boolean('is_current')->default(false);
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamps();
+        });
+
+        /**
+         * 8️⃣ Regras especiais do processo (validações ou fluxos condicionais)
          */
         Schema::create('process_rules', function (Blueprint $table) {
             $table->id();
@@ -105,7 +117,7 @@ return new class extends Migration
         });
 
         /**
-         * 8️⃣ Notificações automáticas (e-mails dinâmicos configuráveis)
+         * 9️⃣ Notificações automáticas (e-mails dinâmicos configuráveis)
          */
         Schema::create('process_notifications', function (Blueprint $table) {
             $table->id();
@@ -116,7 +128,7 @@ return new class extends Migration
             $table->string('cc', 255)->nullable();
             $table->string('bcc', 255)->nullable();
             $table->string('subject', 255)->nullable();
-            $table->string('template_view', 255)->nullable(); // ex: process_emails.approval.blade.php
+            $table->string('template_view', 255)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
@@ -126,6 +138,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('process_notifications');
         Schema::dropIfExists('process_rules');
+        Schema::dropIfExists('process_steps');
         Schema::dropIfExists('process_logs');
         Schema::dropIfExists('process_workflows');
         Schema::dropIfExists('process_documents');

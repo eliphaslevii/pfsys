@@ -65,21 +65,34 @@ class User extends Authenticatable
         return $this->belongsTo(Sector::class);
     }
 
-    public function hasPermissionTo(string $permissionName): bool
+    public function hasPermission(string $permission): bool
     {
-        // 1. Acesso Rápido por Nível de Autoridade (Super Admin)
-        // Usa o operador nullsafe (?)
-        if ($this->level?->authority_level >= 90) {
+        // 🔹 Libera todos os usuários de nível "Super" ou "Admin"
+        if ($this->level && preg_match('/super|admin/i', $this->level->name)) {
             return true;
         }
 
-        // 2. Checagem Granular via Pivot Table (Se o Level existir)
-        if (!$this->level) {
-            return false;
+        // 🔹 Caso o usuário tenha permissões diretas (se você adicionar futuramente)
+        if (method_exists($this, 'permissions') && $this->permissions->contains('name', $permission)) {
+            return true;
         }
 
-        return $this->level->permissions
-            ->pluck('name')
-            ->contains($permissionName);
+        // 🔹 Caso o nível associado tenha permissões
+        if ($this->level && method_exists($this->level, 'permissions') && $this->level->permissions->contains('name', $permission)) {
+            return true;
+        }
+
+        // 🔹 Caso contrário, sem permissão
+        return false;
     }
+
+    /**
+     * Compatibilidade com o Blade (@can) e padrões do Spatie.
+     */
+    public function hasPermissionTo(string $permission): bool
+    {
+        return $this->hasPermission($permission);
+    }
+
+
 }

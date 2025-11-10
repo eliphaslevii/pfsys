@@ -31,7 +31,10 @@ class LevelSeeder extends Seeder
             ['sector' => 'Gerência de Produtos', 'name' => 'Gerente de Produtos', 'authority_level' => 40],
 
             // Administração
-            ['sector' => 'Administração', 'name' => 'Admin Master', 'authority_level' => 100],
+            ['sector' => 'Administrativo', 'name' => 'Admin Master', 'authority_level' => 100],
+
+            ['sector' => 'Administrativo', 'name' => 'Super Admin (TI)', 'authority_level' => 100],
+
         ];
 
         foreach ($levels as $data) {

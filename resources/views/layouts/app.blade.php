@@ -73,18 +73,29 @@
         @endif
 
         {{-- RELATÓRIOS (Exemplo extra, se quiser expandir depois) --}}
-        @can('view_reports')
+      @if(auth()->user()?->hasPermission('Super Admin (TI)'))
+
           <li class="nav-item has-submenu">
             <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
               <span><i class="ti ti-receipt-refund nav-icon"></i>Devolução</span>
               <i class="ti ti-chevron-down submenu-chevron"></i>
             </button>
             <ul class="navbar-nav flex-column ms-3 submenu">
-              <li class="nav-item"><a class="nav-link" href="{{ request()->routeIs('return-process.create')}}">Devoluções</a></li>
-              <li class="nav-item"><a class="nav-link" href="#">Atendimento</a></li>
+              <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('return.process.create') ? 'active' : '' }}"
+                  href="{{ route('return.process.create') }}">
+                  <i class="ti ti-circle-plus nav-icon"></i> Nova Devolução
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
+                  href="{{ route('return.process.index') }}">
+                  <i class="ti ti-list-details nav-icon"></i> Acompanhamento
+                </a>
+              </li>
             </ul>
           </li>
-        @endcan
+        @endif
 
       </ul>
       <!-- Rodapé -->
@@ -168,6 +179,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta22/dist/js/tabler.min.js"></script>
   <script src="{{ asset('notyf/notyf.min.js') }}"></script>
 
+@stack('scripts')
 
 </body>
 

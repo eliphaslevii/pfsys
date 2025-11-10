@@ -2,33 +2,32 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-
-        $this->call(SectorSeeder::class);
-        // 2. Permissões (Permissions)
-        $this->call(PermissionSeeder::class);
-        // 3. Níveis (Levels) - Depende de Setores e Permissões
-        $this->call(LevelSeeder::class);
-
-        // Opcional: Adicionar Usuário de Teste (Super Admin)
-        $this->call(UserSeeder::class);
+        // 1️⃣ Estruturas base
         $this->call([
-            SectorsSeeder::class,
-            LevelsSeeder::class,
-            PermissionsSeeder::class,
-            ProcessWorkflowsSeeder::class,
+            SectorSeeder::class,
+            PermissionSeeder::class,
+            LevelSeeder::class,
+        ]);
+
+        // 2️⃣ Usuários padrão
+        $this->call([
+            UserSeeder::class,
+            TestUsersSeeder::class, // opcional — remova se não existir
+        ]);
+
+        // 3️⃣ Processos e workflows
+        $this->call([
+            ProcessTypeSeeder::class,
+            WorkflowSeeder::class,
         ]);
     }
 }

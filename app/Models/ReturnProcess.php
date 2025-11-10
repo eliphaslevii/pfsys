@@ -6,24 +6,38 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReturnProcess extends Model
 {
+    protected $table = 'processes'; // 👈 conecta à tabela existente
     protected $fillable = [
-        'tipo',
-        'nomeCliente',
-        'cnpjCliente',
-        'motivo',
-        'codigoErro',
-        'observacao',
-        'gestorSolicitante',
-        'movimentacaoMercadoria',
+        'process_type_id',
+        'created_by',
+        'current_workflow_id',
+        'status',
+        'cliente_nome',
+        'cliente_cnpj',
+        'nf_saida',
+        'nf_devolucao',
+        'recusa_sefaz',
+        'movimentacao_mercadoria',
+        'observacoes',
     ];
+
+    public function type()
+    {
+        return $this->belongsTo(ProcessType::class, 'process_type_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
     public function items()
     {
-        return $this->hasMany(ReturnProcessItem::class);
+        return $this->hasMany(ProcessItem::class, 'process_id');
     }
 
-    public function steps()
+    public function logs()
     {
-        return $this->hasMany(ReturnProcessStep::class);
+        return $this->hasMany(ProcessLog::class, 'process_id');
     }
 }

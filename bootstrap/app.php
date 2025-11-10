@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'permission' => HasPermission::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'haspermission' => \App\Http\Middleware\HasPermission::class, //
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
