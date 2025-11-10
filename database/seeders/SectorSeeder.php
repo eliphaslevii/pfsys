@@ -7,25 +7,19 @@ use App\Models\Sector;
 
 class SectorSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Usando firstOrCreate para evitar erro de violação de chave única
-        Sector::firstOrCreate(
-            ['name' => 'Administrativo'],
-            ['description' => 'Setor de gestão interna, financeiro e recursos humanos.', 'is_active' => true]
-        );
+        $sectors = [
+            ['name' => 'Comercial', 'description' => 'Responsável por abertura e controle de processos comerciais.'],
+            ['name' => 'Logística', 'description' => 'Gerencia transporte, recebimento e devoluções.'],
+            ['name' => 'Fiscal', 'description' => 'Responsável pela parte fiscal e emissão de notas.'],
+            ['name' => 'Financeiro', 'description' => 'Contas a pagar e faturamento.'],
+            ['name' => 'Gerência de Produtos', 'description' => 'Controle de produtos e planejamento.'],
+            ['name' => 'Administração', 'description' => 'Setor administrativo com acesso total.'],
+        ];
 
-        Sector::firstOrCreate(
-            ['name' => 'Comercial'],
-            ['description' => 'Setor responsável pelas vendas e relacionamento com clientes.', 'is_active' => true]
-        );
-
-        Sector::firstOrCreate(
-            ['name' => 'Desenvolvimento'],
-            ['description' => 'Setor responsável pelo desenvolvimento e manutenção de sistemas.', 'is_active' => true]
-        );
+        foreach ($sectors as $sector) {
+            Sector::updateOrCreate(['name' => $sector['name']], $sector);
+        }
     }
 }

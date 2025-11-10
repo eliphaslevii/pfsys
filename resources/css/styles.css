@@ -1,0 +1,320 @@
+    :root {
+      --sidebar-bg: #354A5F;
+      --sidebar-hover: #475E75;
+      --sidebar-text: #FFFFFF;
+      --sidebar-muted: #cbd5e1;
+      --border-color: #4a6075;
+      --drawer-width: 260px;
+      --primary-color: #206bc4;
+      --bg-light: #f8f9fb;
+      --card-bg: #ffffff;
+      --border-color: #e0e6ed;
+      --text-muted: #6c757d;
+      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: #222;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .page-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* CARDS */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s ease-in-out;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+      background-color: transparent;
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: #212529;
+    }
+
+    /* TABELAS */
+    .table {
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table th {
+      background-color: #f1f3f5;
+      color: #333;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #fafafa;
+    }
+
+    /* FORMULÁRIOS */
+    .form-control,
+    .form-select {
+      border-radius: 0.6rem;
+      border: 1px solid var(--border-color);
+      box-shadow: none;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.95rem;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      background-color: #1858a8;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.1);
+    }
+
+    /* SIDEBAR */
+    aside.navbar-vertical {
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      transition: transform 0.3s ease;
+      width: var(--drawer-width);
+      z-index: 1250;
+    }
+
+    .navbar-vertical .nav-link {
+      color: var(--sidebar-muted);
+      border-radius: 6px;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 10px 14px;
+    }
+
+    .navbar-vertical .nav-link:hover,
+    .navbar-vertical .nav-link.active {
+      background-color: var(--sidebar-hover);
+      color: #fff !important;
+    }
+
+    .navbar-vertical .nav-icon {
+      font-size: 1.2rem;
+      margin-right: 10px;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-footer .avatar {
+      width: 38px;
+      height: 38px;
+      background: var(--sidebar-hover);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .sidebar-footer .user-info {
+      margin-left: 10px;
+    }
+
+    .sidebar-footer .user-info .name {
+      font-weight: 600;
+      color: #fff;
+      line-height: 1;
+    }
+
+    /* Responsividade */
+    @media (min-width: 992px) {
+      aside.navbar-vertical {
+        position: fixed;
+        height: 100%;
+        left: 0;
+        top: 0;
+        transform: translateX(0);
+        border-right: 1px solid var(--border-color);
+      }
+
+      .page-wrapper {
+        margin-left: var(--drawer-width);
+        padding: 20px;
+      }
+
+      .mobile-topbar {
+        display: none;
+      }
+    }
+
+    @media (max-width: 991.98px) {
+      aside.navbar-vertical {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        transform: translateX(-100%);
+      }
+
+      aside.navbar-vertical.show {
+        transform: translateX(0);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
+      }
+
+      .page-wrapper {
+        margin: 0;
+        padding: 18px;
+      }
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 1200;
+    }
+
+    .mobile-topbar {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      z-index: 1300;
+    }
+
+    .submenu {
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    .rotate {
+      transform: rotate(180deg);
+      transition: transform 0.25s ease;
+    }
+
+    .items-container {
+      transition: all 0.25s ease-in-out;
+    }
+
+    /* Corrige bordas escuras de selects e inputs */
+    .form-select,
+    .form-control {
+      border: 1px solid #d9dee3 !important;
+      /* tom padrão do Tabler */
+      border-radius: 0.4rem !important;
+      background-color: #fff !important;
+      color: #212529;
+      box-shadow: none !important;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    }
+
+    /* Estado de foco (azul Tabler) */
+    .form-select:focus,
+    .form-control:focus {
+      border-color: #206bc4 !important;
+      box-shadow: 0 0 0 0.15rem rgba(32, 107, 196, 0.25) !important;
+      outline: none !important;
+    }
+
+    /* Corrige o ícone do select no Chrome/Edge */
+    .form-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 0.75em;
+    }
+
+    /* Deixa o arquivo de upload visualmente integrado */
+    input[type="file"].form-control {
+      padding: 0.4rem 0.75rem;
+    }
+
+    /* Ajuste fino do botão Mostrar Itens */
+    .toggle-items-btn {
+      font-size: 0.875rem;
+      color: #495057;
+      border-color: #d9dee3 !important;
+    }
+
+    .toggle-items-btn:hover {
+      background-color: #f6f8fb;
+      border-color: #c5ccd3 !important;
+    }
+
+    .client-info-border {
+      border: 1px solid #d9dee3 !important;
+      border-radius: 0.4rem !important;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    /* Garante que o dropdown do rodapé apareça totalmente visível */
+    .sidebar-footer {
+      position: relative;
+      overflow: visible !important;
+      z-index: 999;
+    }
+
+    /* Posiciona o menu acima do botão (abre pra cima) */
+    .sidebar-footer .dropdown-menu {
+      position: absolute !important;
+      bottom: calc(100% + 10px);
+      /* abre pra cima */
+      top: auto !important;
+      left: 0;
+      right: 0;
+      display: none;
+      background-color: var(--card-bg, #fff);
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+    }
+
+    .sidebar-footer .dropdown-menu.show {
+      display: block !important;
+    }
+
+    /* Efeito suave */
+    .sidebar-footer .dropdown-menu {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .sidebar-footer .dropdown-menu.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Ajuste do botão */
+    .sidebar-footer .btn {
+      cursor: pointer;
+    }

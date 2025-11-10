@@ -219,7 +219,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Setor</label>
-                            <select name="sector_id" id="editSector" class="form-select">
+                            <select name="sector_id" id="editSector" class="form-select" required>
                                 @foreach ($sectors as $sector)
                                     <option value="{{ $sector->id }}">{{ $sector->name }}</option>
                                 @endforeach
@@ -228,7 +228,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Nível</label>
-                            <select name="level_id" id="editLevel" class="form-select">
+                            <select name="level_id" id="editLevel" class="form-select" required>
                                 @foreach ($levels as $level)
                                     <option value="{{ $level->id }}">{{ $level->name }}</option>
                                 @endforeach
