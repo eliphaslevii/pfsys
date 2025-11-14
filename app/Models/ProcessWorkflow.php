@@ -36,4 +36,8 @@ class ProcessWorkflow extends Model
     {
         return $this->hasMany(ProcessNotification::class, 'workflow_id');
     }
+    public function template()
+    {
+        return $this->belongsTo(WorkflowTemplate::class, 'workflow_template_id');
+    }
 }

@@ -69,52 +69,59 @@
         <label for="observacoes_{{ $context }}" class="form-label fw-semibold text-secondary">
             <i class="ti ti-notes me-1 text-muted"></i> Observações
         </label>
-        <textarea id="observacoes_{{ $context }}" class="form-control" rows="3" required style="resize: none;"></textarea>
+        <textarea id="observacoes_{{ $context }}" class="form-control" rows="3" required
+            style="resize: none;"></textarea>
     </div>
 </div>
 
 <!-- Informações XML -->
-<div id="client-info-box_{{ $context }}" class="mt-4 p-3 rounded-3 border-start border-4 border-primary bg-light-subtle shadow-sm">
+<div id="client-info-box_{{ $context }}"
+    class="mt-4 p-3 rounded-3 border-start border-4 border-primary bg-light-subtle shadow-sm">
     <h6 class="fw-bold text-primary mb-3"><i class="ti ti-file-description me-1"></i> Informações do XML</h6>
     <div class="row small text-secondary">
         <div class="col-md-6">
             <p><strong>Cliente:</strong> <span id="client-name-display_{{ $context }}">N/A</span></p>
             <p><strong>CNPJ:</strong> <span id="client-cnpj-display_{{ $context }}">N/A</span></p>
-            <p><strong>NF Saída:</strong> <span id="nf-saida-display_{{ $context }}">N/A</span></p>
+            <p><strong>NF de Saída:</strong> <span id="nf-saida-display_{{ $context }}">N/A</span></p>
+            <p><strong>Informações Complementares:</strong> <span id="inf-cpl-display_{{ $context }}">N/A</span></p>
         </div>
         <div class="col-md-6">
-            <p><strong>NF Devolução:</strong> <span id="inf-nfd-display_{{ $context }}">N/A</span></p>
-            <p><strong>Protocolo:</strong> <span id="nprot-display_{{ $context }}">N/A</span></p>
-            <p><strong>Info. Complementares:</strong> <span id="inf-cpl-display_{{ $context }}">N/A</span></p>
+            <p><strong>Protocolo (nProt):</strong> <span id="nprot-display_{{ $context }}">N/A</span></p>
+            <p><strong>NF Devolução (NFD):</strong> <span id="inf-nfd-display_{{ $context }}">N/A</span></p>
+            <p><strong>NF Original (NFO):</strong> <span id="inf-nfo-display_{{ $context }}">N/A</span></p>
         </div>
     </div>
 </div>
 
 <!-- Itens -->
 <div class="mt-4 d-flex justify-content-between align-items-center">
-    <h6 class="text-muted mb-0"><i class="ti ti-list-details me-1"></i> Itens da Nota Fiscal</h6>
-    <button type="button" class="btn btn-sm btn-outline-primary btn-pill toggle-items-btn" data-target="#product-table-body_{{ $context }}">
-        <i class="ti ti-chevron-down me-1"></i> Mostrar Itens
-    </button>
+  <h6 class="text-muted mb-0">
+    <i class="ti ti-list-details me-1"></i> Itens da Nota Fiscal
+  </h6>
+  <button type="button"
+          class="btn btn-sm btn-outline-primary btn-pill toggle-items-btn"
+          data-target=".items-container">
+    <i class="ti ti-chevron-down me-1"></i> Mostrar Itens
+  </button>
 </div>
 
 <div class="table-responsive mt-3 items-container shadow-sm rounded-3 border" style="display:none;">
-    <table class="table table-vcenter table-striped align-middle mb-0">
-        <thead class="table-light">
-            <tr class="text-secondary">
-                <th>Artigo</th>
-                <th>Descrição</th>
-                <th>NCM</th>
-                <th>NF Saída</th>
-                <th>NF Devolução</th>
-                <th>Qtd.</th>
-                <th>Preço Unit.</th>
-            </tr>
-        </thead>
-        <tbody id="product-table-body_{{ $context }}">
-            <tr>
-                <td colspan="7" class="text-center text-muted py-3">Nenhum item carregado.</td>
-            </tr>
-        </tbody>
-    </table>
+  <table class="table table-vcenter table-striped align-middle mb-0">
+    <thead class="table-light">
+      <tr class="text-secondary">
+        <th>Artigo</th>
+        <th>Descrição</th>
+        <th>NCM</th>
+        <th>NF Saída</th>
+        <th>NF Devolução</th>
+        <th>Qtd.</th>
+        <th>Preço Unit.</th>
+      </tr>
+    </thead>
+    <tbody id="product-table-body_{{ $context }}">
+      <tr>
+        <td colspan="7" class="text-center text-muted py-3">Nenhum item carregado.</td>
+      </tr>
+    </tbody>
+  </table>
 </div>

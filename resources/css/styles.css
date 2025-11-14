@@ -170,6 +170,19 @@
       }
     }
 
+    /* Corrige modais centralizados com sidebar Tabler */
+    @media (min-width: 992px) {
+      .modal-dialog {
+        transform: translate(calc(var(--drawer-width) / 2), 0) !important;
+      }
+    }
+
+    @media (max-width: 991.98px) {
+      .modal-dialog {
+        transform: none !important;
+      }
+    }
+
     @media (max-width: 991.98px) {
       aside.navbar-vertical {
         position: fixed;
@@ -318,3 +331,79 @@
     .sidebar-footer .btn {
       cursor: pointer;
     }
+    /* ----------  UI helpers: botões e badges usando cores do :root ---------- */
+
+/* Toggle button (Mostrar Itens) — usa a cor primária do :root */
+.toggle-items-btn {
+  color: var(--primary-color);
+  border-color: var(--primary-color) !important;
+  background-color: transparent !important;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s;
+  padding: 0.375rem 0.6rem;
+  font-size: 0.875rem;
+}
+
+/* Hover/active: fundo com a cor primária e texto branco (contraste) */
+.toggle-items-btn:hover,
+.toggle-items-btn:focus {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 6px 18px rgba(32, 107, 196, 0.12);
+}
+
+/* Pequeno ajuste no ícone dentro do botão */
+.toggle-items-btn i {
+  vertical-align: middle;
+}
+
+/* Client info box: mantém borda azul e leve sombreamento */
+.client-info-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: .6rem;
+  border-left: 4px solid var(--primary-color);
+  background: #fff; /* já tem bg-light-subtle no markup, garantir branco interno */
+  box-shadow: var(--shadow-sm);
+}
+
+/* Status badges (visual consistente, usando cores Bootstrap + transparência) */
+.fw-semibold {
+  display: inline-block;
+  padding: .25rem .5rem;
+  border-radius: .4rem;
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+/* approved / success */
+.fw-semibold.text-success {
+  color: #198754;                /* bootstrap success */
+  background: #1987541f;         /* 12% alpha */
+}
+
+/* danger / rejected */
+.fw-semibold.text-danger {
+  color: #dc3545;
+  background: #dc35451f;
+}
+
+/* warning / pending */
+.fw-semibold.text-warning {
+  color: #ffc107;
+  background: #ffc1071f;
+}
+
+/* default muted */
+.fw-semibold.text-muted {
+  color: #495057;
+  background: rgba(0,0,0,0.03);
+}
+
+/* garante legibilidade do texto do botão quando ícone muda */
+.btn-pill i { margin-right: .35rem; }
+
+/* items-container base (sem animação pesada) */
+.items-container {
+  display: none; /* controle via JS */
+}

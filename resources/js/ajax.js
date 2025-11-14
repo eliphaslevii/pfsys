@@ -92,54 +92,63 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ===============================
      2️⃣ SUBMIT UNIVERSAL AJAX
   =============================== */
-  document.addEventListener('submit', async e => {
-    const form = e.target.closest('.modal form');
-    if (!form) return;
+document.addEventListener('submit', async e => {
+    const form = e.target;
 
+    // 🔥 Agora captura forms dentro de modais de qualquer estrutura
+    const modal = form.closest('.modal, .modal-dialog, .modal-content');
+
+    if (!modal) return; // não é modal → deixa envio normal
     e.preventDefault();
 
     const submitBtn = form.querySelector('button[type="submit"]');
-    const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
-    submitBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
 
-    const formData = new FormData();
-    form.querySelectorAll('input, select, textarea').forEach(el => {
-      if (!el.name) return;
-      if (el.type === 'checkbox') formData.append(el.name, el.checked ? 1 : 0);
-      else formData.append(el.name, el.value);
-    });
+    const formData = new FormData(form);
+    const override = form.querySelector('input[name="_method"]')?.value?.toUpperCase() || 'POST';
+    const method = ['PUT', 'PATCH', 'DELETE'].includes(override) ? override : 'POST';
 
+    console.log("📨 Método detectado:", method);
     console.log("📤 Enviando dados:", Object.fromEntries(formData.entries()));
 
     try {
-      const res = await fetch(form.action, {
-        method: 'POST', // Laravel respeita _method
-        headers: {
-          'X-CSRF-TOKEN': csrf,
-          'Accept': 'application/json'
-        },
-        body: formData
-      });
+        const res = await fetch(form.action, {
+            method,
+            headers: {
+                'X-CSRF-TOKEN': csrf,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
 
-      const data = await res.json();
-      console.log("📥 Resposta:", data);
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            const html = await res.text();
+            console.error("⚠️ Resposta HTML:", html);
+            notyf.error("Resposta inválida do servidor.");
+            return;
+        }
 
-      if (res.ok && data.success) {
-        notyf.success(data.message || 'Operação concluída com sucesso!');
-        modal?.hide();
-        setTimeout(() => window.location.reload(), 700);
-      } else if (res.status === 422 && data.errors) {
-        const first = Object.values(data.errors)[0][0];
-        notyf.error(first || 'Verifique os campos e tente novamente.');
-      } else {
-        notyf.error(data.message || 'Erro ao processar requisição.');
-      }
+        console.log("📥 Resposta:", data);
 
-    } catch (err) {
-      console.error("🚨 Erro AJAX:", err);
-      notyf.error('Falha na comunicação com o servidor.');
+        if (res.ok && data.success) {
+            notyf.success(data.message);
+            const bsModal = bootstrap.Modal.getInstance(modal.closest('.modal'));
+            bsModal?.hide();
+            setTimeout(() => location.reload(), 400);
+        } else if (res.status === 422) {
+            notyf.error(Object.values(data.errors)[0][0]);
+        } else {
+            notyf.error(data.message || "Erro ao salvar.");
+        }
+
     } finally {
-      submitBtn.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
-  });
+});
+
+
 });

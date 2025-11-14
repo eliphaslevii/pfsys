@@ -36,16 +36,28 @@ return new class extends Migration {
             $table->foreignId('process_type_id')->constrained('process_types')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->foreignId('current_workflow_id')->nullable()->constrained('process_workflows')->onDelete('set null');
+
             $table->string('status', 50)->default('Aberto');
             $table->string('cliente_nome')->nullable();
             $table->string('cliente_cnpj', 20)->nullable();
+
+            // Campos fiscais e de controle
             $table->string('nf_saida', 50)->nullable();
             $table->string('nf_devolucao', 50)->nullable();
+            $table->string('nfo', 50)->nullable();             // nota fiscal original referenciada
+            $table->string('protocolo', 100)->nullable();      // nProt
             $table->string('recusa_sefaz', 100)->nullable();
+            $table->string('delivery', 50)->nullable();
+            $table->string('doc_faturamento', 50)->nullable();
+            $table->string('ordem_entrada', 50)->nullable();
+            $table->string('migo', 50)->nullable();
+
             $table->boolean('movimentacao_mercadoria')->default(false);
             $table->text('observacoes')->nullable();
+
             $table->timestamps();
         });
+
 
         /**
          * 4️⃣ Itens do processo (produtos, quantidades, preços, etc.)

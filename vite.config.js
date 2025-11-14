@@ -13,6 +13,9 @@ export default defineConfig({
         'resources/js/modules/returnProcess/create.js',
         'resources/js/modules/returnProcess/index.js',
         'resources/js/modules/returnProcess/steps.js',
+
+        'resources/js/modules/returnProcess/return-process.js',
+        'resources/js/modules/returnProcess/return-process-index.js',
       ],
       refresh: true,
     }),

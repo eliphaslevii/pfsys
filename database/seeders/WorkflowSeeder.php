@@ -3,78 +3,101 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\WorkflowTemplate;
+use App\Models\WorkflowReason;
 use App\Models\ProcessWorkflow;
-use App\Models\ProcessType;
-use App\Models\Level;
 
 class WorkflowSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $devolucao = ProcessType::where('name', 'Devolução')->first();
-        $recusa = ProcessType::where('name', 'Recusa')->first();
-
-        if (!$devolucao || !$recusa) {
-            throw new \Exception("Os tipos de processo 'Devolução' e 'Recusa' precisam existir antes de rodar este seeder.");
-        }
-
-        $levels = Level::pluck('id', 'name'); // pega os IDs por nome
-
-        $workflows = [
-            // 🔹 Etapas da Devolução
-            [
-                'process_type_id' => $devolucao->id,
-                'step_name' => 'Comercial (Validação)',
-                'required_level_id' => $levels['Comercial'] ?? null,
-                'next_step' => 'Financeiro (Análise)',
-                'auto_notify' => true,
-            ],
-            [
-                'process_type_id' => $devolucao->id,
-                'step_name' => 'Financeiro (Análise)',
-                'required_level_id' => $levels['Financeiro'] ?? null,
-                'next_step' => 'Fiscal (Validação)',
-                'auto_notify' => true,
-            ],
-            [
-                'process_type_id' => $devolucao->id,
-                'step_name' => 'Fiscal (Validação)',
-                'required_level_id' => $levels['Fiscal'] ?? null,
-                'next_step' => null, // fim do processo
-                'auto_notify' => true,
+        $templates = [
+            'Sucateamento' => [
+                'motivos' => [
+                    'Material Descartado',
+                    'Devolução + sucateamento'
+                ],
+                'steps' => [
+                    'Comercial',
+                    'Financeiro',
+                    'Logística',
+                    'Financeiro (Pós-Logística)',
+                    'Logística (Refaturamento)',
+                    'Financeiro 2'
+                ]
             ],
 
-            // 🔹 Etapas da Recusa
-            [
-                'process_type_id' => $recusa->id,
-                'step_name' => 'Financeiro (Pré-Análise)',
-                'required_level_id' => $levels['Financeiro'] ?? null,
-                'next_step' => 'Comercial (Verificação)',
-                'auto_notify' => true,
+            'Ajuste / Baixa Financeira' => [
+                'motivos' => [
+                    'Retorno de Material para a PFERD',
+                    'Somente ajuste de estoque',
+                    'Baixa financeira'
+                ],
+                'steps' => [
+                    'Comercial',
+                    'Financeiro',
+                    'Logística',
+                    'Financeiro 2'
+                ]
             ],
-            [
-                'process_type_id' => $recusa->id,
-                'step_name' => 'Comercial (Verificação)',
-                'required_level_id' => $levels['Comercial'] ?? null,
-                'next_step' => 'Fiscal (Conclusão)',
-                'auto_notify' => true,
+
+            'Transporte PFERD' => [
+                'motivos' => [
+                    'Retorno de Material para a PFERD + Transporte PFERD'
+                ],
+                'steps' => [
+                    'Comercial',
+                    'Logística (Agendar Coleta)',
+                    'Logística (Aguardando Recebimento)',
+                    'Financeiro',
+                    'Logística',
+                    'Financeiro 2'
+                ]
             ],
-            [
-                'process_type_id' => $recusa->id,
-                'step_name' => 'Fiscal (Conclusão)',
-                'required_level_id' => $levels['Fiscal'] ?? null,
-                'next_step' => null,
-                'auto_notify' => true,
+
+            'Transporte Cliente' => [
+                'motivos' => [
+                    'Retorno de Material para a PFERD + Transporte CLIENTE'
+                ],
+                'steps' => [
+                    'Financeiro',
+                    'Logística (Aguardando Recebimento)',
+                    'Financeiro',
+                    'Logística',
+                    'Financeiro 2'
+                ]
+            ],
+
+            'Padrão' => [
+                'motivos' => [],
+                'steps' => [
+                    'Comercial',
+                    'Financeiro',
+                    'Logística',
+                    'Comercial (Refaturamento)',
+                    'Logística (Refaturado)',
+                    'Financeiro 2'
+                ]
             ],
         ];
 
-        foreach ($workflows as $wf) {
-            ProcessWorkflow::firstOrCreate(
-                ['process_type_id' => $wf['process_type_id'], 'step_name' => $wf['step_name']],
-                $wf
-            );
-        }
+        foreach ($templates as $name => $data) {
+            $template = WorkflowTemplate::create(['name' => $name]);
 
-        echo "✅ Workflows de Devolução e Recusa criados com sucesso.\n";
+            foreach ($data['motivos'] as $motivo) {
+                WorkflowReason::create([
+                    'name' => $motivo,
+                    'workflow_template_id' => $template->id
+                ]);
+            }
+
+            foreach ($data['steps'] as $i => $step) {
+                ProcessWorkflow::create([
+                    'workflow_template_id' => $template->id,
+                    'name' => $step,
+                    'step_order' => $i + 1
+                ]);
+            }
+        }
     }
 }

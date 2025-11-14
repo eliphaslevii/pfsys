@@ -44,14 +44,14 @@
         </li>
 
         {{-- GERENCIAMENTO --}}
-        @if(auth()->user()?->hasPermissionTo('Super Admin (TI)') || auth()->user()?->hasPermissionTo('Super Admin (TI)'))
+        @if(auth()->user()?->hasPermission('coreflow.admin'))
           <li class="nav-item has-submenu">
             <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
               <span><i class="ti ti-settings nav-icon"></i> Gerenciamento</span>
               <i class="ti ti-chevron-down submenu-chevron"></i>
             </button>
             <ul class="navbar-nav flex-column ms-3 submenu">
-              @can('manage_users')
+              @can('coreflow.admin')
                 <li class="nav-item">
                   <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
                     href="{{ route('admin.users') }}">
@@ -60,7 +60,7 @@
                 </li>
               @endcan
 
-              @can('manage_sectors')
+              @can('coreflow.admin')
                 <li class="nav-item">
                   <a class="nav-link {{ request()->routeIs('admin.sectors.index') ? 'active' : '' }}"
                     href="{{ route('admin.sectors.index') }}">
@@ -73,29 +73,34 @@
         @endif
 
         {{-- RELATÓRIOS (Exemplo extra, se quiser expandir depois) --}}
-      @if(auth()->user()?->hasPermission('Super Admin (TI)'))
+@if(auth()->user()?->hasPermission('return.process'))
+  <li class="nav-item has-submenu">
+    <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
+      <span><i class="ti ti-receipt-refund nav-icon"></i>Devolução</span>
+      <i class="ti ti-chevron-down submenu-chevron"></i>
+    </button>
+    
+    <ul class="navbar-nav flex-column ms-3 submenu">
+      
+      <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
+           href="{{ route('return.process.index') }}">
+          <i class="ti ti-list-details nav-icon"></i> Devoluções
+        </a>
+      </li>
+      
+      @if(auth()->user()?->hasPermission('coreflow.admin'))
+        <li class="nav-item">
+          <a class="nav-link {{ request()->routeIs('workflows.index') ? 'active' : '' }}"
+             href="{{ route('workflows.index') }}">
+            <i class="ti ti-settings-automation nav-icon"></i> Gerenciar Fluxo
+          </a>
+        </li>
+      @endif
 
-          <li class="nav-item has-submenu">
-            <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
-              <span><i class="ti ti-receipt-refund nav-icon"></i>Devolução</span>
-              <i class="ti ti-chevron-down submenu-chevron"></i>
-            </button>
-            <ul class="navbar-nav flex-column ms-3 submenu">
-              <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('return.process.create') ? 'active' : '' }}"
-                  href="{{ route('return.process.create') }}">
-                  <i class="ti ti-circle-plus nav-icon"></i> Nova Devolução
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
-                  href="{{ route('return.process.index') }}">
-                  <i class="ti ti-list-details nav-icon"></i> Acompanhamento
-                </a>
-              </li>
-            </ul>
-          </li>
-        @endif
+    </ul>
+  </li>
+@endif
 
       </ul>
       <!-- Rodapé -->
@@ -179,7 +184,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta22/dist/js/tabler.min.js"></script>
   <script src="{{ asset('notyf/notyf.min.js') }}"></script>
 
-@stack('scripts')
+  @stack('scripts')
 
 </body>
 

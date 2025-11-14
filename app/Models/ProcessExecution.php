@@ -50,4 +50,11 @@ class ProcessExecution extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+    /**
+     * 🔗 Relacionamento com o template de workflow
+     */
+    public function template()
+    {
+        return $this->belongsTo(WorkflowTemplate::class, 'workflow_template_id');
+    }
 }

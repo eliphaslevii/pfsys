@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SectorController;
 use App\Http\Controllers\ReturnProcess\ReturnProcessController;
 use App\Http\Controllers\ReturnProcess\ReturnProcessStepController;
-
+use App\Http\Controllers\ReturnProcess\WorkflowController;
 // Página inicial → Login
 Route::get('/', fn() => view('auth.login'));
 
@@ -51,30 +51,29 @@ Route::prefix('return-process')
 
         // 🔹 Acesso geral (listar e visualizar)
         Route::get('/', [ReturnProcessController::class, 'index'])
-            ->middleware('haspermission:return_process.view')
+            ->middleware('haspermission:return.process')
             ->name('index');
 
-        Route::get('/data', [ReturnProcessController::class, 'getProcessesData'])
-            ->middleware('haspermission:return_process.view')
+        Route::get('/data', [ReturnProcessController::class, 'data'])
+            ->middleware('haspermission:return.process')
             ->name('data');
 
-
         Route::get('/{id}', [ReturnProcessController::class, 'show'])
-            ->middleware('haspermission:return_process.view')
+            ->middleware('haspermission:return.process')
             ->name('show');
 
         // 🔸 Criar processo (Comercial)
         Route::get('/create', [ReturnProcessController::class, 'create'])
-            ->middleware('haspermission:return_process.create')
+            ->middleware('haspermission:return.process')
             ->name('create');
 
         Route::post('/', [ReturnProcessController::class, 'store'])
-            ->middleware('haspermission:return_process.create')
+            ->middleware('haspermission:return.process')
             ->name('store');
 
         // 🔸 Atualizar etapa (Financeiro / Logística / Comercial)
         Route::post('/{id}/update-step', [ReturnProcessStepController::class, 'update'])
-            ->middleware('haspermission:return_process.update_step')
+            ->middleware('haspermission:return.process')
             ->name('update-step');
 
         // 🔸 Rejeitar processo (Financeiro / Super Admin)
@@ -89,9 +88,23 @@ Route::prefix('return-process')
 
         // 🔴 Excluir (Comercial / Super)
         Route::delete('/{id}', [ReturnProcessController::class, 'destroy'])
-            ->middleware('haspermission:return_process.delete')
+            ->middleware('haspermission:process.delete')
             ->name('destroy');
     });
 
+Route::middleware(['auth', 'can:coreflow.admin'])->prefix('admin/workflows')->group(function () {
+
+    // 🔹 Tela principal
+    Route::get('/', [WorkflowController::class, 'index'])->name('workflows.index');
+
+    // 🔹 Etapas do fluxo (steps)
+    Route::post('/update-order', [WorkflowController::class, 'updateStepOrder'])->name('workflows.updateOrder');
+    Route::post('/add-step', [WorkflowController::class, 'storeStep'])->name('workflows.addStep');
+
+    // 🔹 Motivos de devolução
+    Route::post('/add-reason', [WorkflowController::class, 'addReason'])->name('workflows.addReason');
+    Route::put('/update-reason/{id}', [WorkflowController::class, 'updateReason'])->name('workflows.updateReason');
+    Route::delete('/delete-reason/{id}', [WorkflowController::class, 'deleteReason'])->name('workflows.deleteReason');
+});
 
 require __DIR__ . '/auth.php';

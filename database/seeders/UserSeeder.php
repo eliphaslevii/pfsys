@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
             ['email' => 'luiz.cesar@pferd.com'],
             [
                 'name' => 'Luiz Cesar (Admin TI)',
-                'password' => Hash::make('vbox@bsys'), 
+                'password' => Hash::make('Jcr1st0#'), 
                 'level_id' => $superAdminLevel->id,
                 'sector_id' => $adminSector->id,
                 'email_verified_at' => now(),

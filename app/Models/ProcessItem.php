@@ -10,10 +10,12 @@ class ProcessItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'process_id',
+       'process_id',
         'artigo',
         'descricao',
         'ncm',
+        'nf_saida',
+        'nf_devolucao',
         'quantidade',
         'preco_unitario',
     ];

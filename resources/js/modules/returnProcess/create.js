@@ -1,18 +1,40 @@
 /**
- * CoreFlow - Return Process Creation
- * Adaptado do sistema antigo para o layout com abas (Recusa / Devolução)
+ * CoreFlow - Return Process Creation (Revisado 2025)
  * ---------------------------------------------------------------
- * - Processa XML
- * - Popula campos automaticamente
- * - Envia via AJAX moderno (fetch)
+ * - Lê XML (NFe)
+ * - Extrai campos completos: nf_saida, nf_devolucao, nfo, protocolo, recusa_sefaz
+ * - Envia via fetch (sem jQuery)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  /* =====================================================
+ * 4️⃣ Botão "Mostrar mais / menos"
+ * ===================================================== */
+document.querySelectorAll('.toggle-items-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetSelector = btn.getAttribute('data-target');
+    const target = btn.closest('div').parentElement.querySelector(targetSelector);
+    const icon = btn.querySelector('i');
+    if (!target) return console.warn('⚠️ Container de itens não encontrado:', targetSelector);
+
+    const isHidden = target.style.display === 'none' || !target.style.display;
+
+    // Alterna visibilidade
+    target.style.display = isHidden ? 'block' : 'none';
+
+    // Troca texto e ícone
+    btn.innerHTML = `
+      <i class="ti ${isHidden ? 'ti-chevron-up' : 'ti-chevron-down'} me-1"></i>
+      ${isHidden ? 'Ocultar Itens' : 'Mostrar Itens'}
+    `;
+  });
+});
+
   const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
   const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
   /* =====================================================
-   * 1️⃣ Configurações de motivos e códigos
+   * 1️⃣ Popular selects de motivos e códigos
    * ===================================================== */
   const motivosBase = {
     grupos: [
@@ -32,9 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
-  /* =====================================================
-   * 2️⃣ Função para popular selects de motivos e códigos
-   * ===================================================== */
   function popularSelects(context) {
     const motivoSelect = document.getElementById(`motivo_${context}`);
     const codigoSelect = document.getElementById(`codigo_erro_${context}`);
@@ -70,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ['recusa', 'devolucao'].forEach(ctx => popularSelects(ctx));
 
   /* =====================================================
-   * 3️⃣ Leitura e parsing do XML
+   * 2️⃣ Processar XML
    * ===================================================== */
   function processarXML(file, context) {
     const reader = new FileReader();
@@ -80,36 +99,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const xml = parser.parseFromString(ev.target.result, "text/xml");
         const ns = "http://www.portalfiscal.inf.br/nfe";
 
-        // Buscas com namespace SEFAZ
         const emit = xml.getElementsByTagNameNS(ns, "emit")[0];
         const dest = xml.getElementsByTagNameNS(ns, "dest")[0];
         const ide = xml.getElementsByTagNameNS(ns, "ide")[0];
         const infCplNode = xml.getElementsByTagNameNS(ns, "infCpl")[0];
         const nProtNode = xml.getElementsByTagNameNS(ns, "nProt")[0];
+        const refNFeNode = xml.getElementsByTagNameNS(ns, "NFref")[0]?.getElementsByTagNameNS(ns, "refNFe")[0];
 
-        // Determina se cliente é emitente ou destinatário conforme aba
         let nomeCliente = "N/A";
         let cnpjCliente = "N/A";
-        if (context === 'recusa' && dest) {
-          nomeCliente = dest.getElementsByTagNameNS(ns, "xNome")[0]?.textContent || "N/A";
-          cnpjCliente = dest.getElementsByTagNameNS(ns, "CNPJ")[0]?.textContent || "N/A";
-        } else if (emit) {
-          nomeCliente = emit.getElementsByTagNameNS(ns, "xNome")[0]?.textContent || "N/A";
-          cnpjCliente = emit.getElementsByTagNameNS(ns, "CNPJ")[0]?.textContent || "N/A";
+        let nfSaida = "N/A";
+        let nfDevolucao = "N/A";
+        let nfo = refNFeNode?.textContent || "N/A";
+        let protocolo = nProtNode?.textContent || "—";
+        let recusaSefaz = "—";
+        let infCpl = infCplNode?.textContent || "";
+
+        // === RECUSA ===
+        if (context === "recusa") {
+          nomeCliente = dest?.getElementsByTagNameNS(ns, "xNome")[0]?.textContent || "N/A";
+          cnpjCliente = dest?.getElementsByTagNameNS(ns, "CNPJ")[0]?.textContent || "N/A";
+          nfSaida = ide?.getElementsByTagNameNS(ns, "nNF")[0]?.textContent || "N/A";
+          recusaSefaz = protocolo || "—";
         }
 
-        const nfSaida = ide?.getElementsByTagNameNS(ns, "nNF")[0]?.textContent || "N/A";
-        const nProt = nProtNode?.textContent || "N/A";
-        const infCpl = infCplNode?.textContent || "N/A";
+        // === DEVOLUÇÃO ===
+        else if (context === "devolucao") {
+          nomeCliente = emit?.getElementsByTagNameNS(ns, "xNome")[0]?.textContent || "N/A";
+          cnpjCliente = emit?.getElementsByTagNameNS(ns, "CNPJ")[0]?.textContent || "N/A";
+          nfDevolucao = ide?.getElementsByTagNameNS(ns, "nNF")[0]?.textContent || "N/A";
+        }
 
-        // Atualiza campos visuais
+        // Atualiza campos na UI
         document.getElementById(`client-name-display_${context}`).textContent = nomeCliente;
         document.getElementById(`client-cnpj-display_${context}`).textContent = cnpjCliente;
         document.getElementById(`nf-saida-display_${context}`).textContent = nfSaida;
-        document.getElementById(`nprot-display_${context}`).textContent = nProt;
+        document.getElementById(`nprot-display_${context}`).textContent = protocolo;
+        document.getElementById(`inf-nfd-display_${context}`).textContent = nfDevolucao;
+        document.getElementById(`inf-nfo-display_${context}`).textContent = nfo;
         document.getElementById(`inf-cpl-display_${context}`).textContent = infCpl;
 
-        // Itens da nota
+        // === Itens ===
         const itens = xml.getElementsByTagNameNS(ns, "det");
         const tbody = document.getElementById(`product-table-body_${context}`);
         tbody.innerHTML = "";
@@ -119,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        const parsedItens = [];
         for (let item of itens) {
           const prod = item.getElementsByTagNameNS(ns, "prod")[0];
           if (!prod) continue;
@@ -129,44 +160,45 @@ document.addEventListener('DOMContentLoaded', () => {
           const qtd = parseFloat(prod.getElementsByTagNameNS(ns, "qCom")[0]?.textContent || 0).toFixed(2);
           const preco = parseFloat(prod.getElementsByTagNameNS(ns, "vUnCom")[0]?.textContent || 0).toFixed(2);
 
+          parsedItens.push({ artigo, descricao, ncm, nf_saida: nfSaida, nf_devolucao: nfDevolucao, quantidade: qtd, preco_unitario: preco });
+
           tbody.innerHTML += `
-          <tr>
-            <td>${artigo}</td>
-            <td>${descricao}</td>
-            <td>${ncm}</td>
-            <td>${nfSaida}</td>
-            <td>N/A</td>
-            <td>${qtd}</td>
-            <td>R$ ${preco.replace('.', ',')}</td>
-          </tr>
-        `;
+            <tr>
+              <td>${artigo}</td>
+              <td>${descricao}</td>
+              <td>${ncm}</td>
+              <td>${nfSaida}</td>
+              <td>${nfDevolucao}</td>
+              <td>${qtd}</td>
+              <td>R$ ${preco.replace('.', ',')}</td>
+            </tr>`;
         }
+
+        // Guarda tudo
+        window._xmlData = { context, nomeCliente, cnpjCliente, nf_saida: nfSaida, nf_devolucao: nfDevolucao, nfo, protocolo, recusa_sefaz: recusaSefaz, inf_cpl: infCpl, itens: parsedItens };
 
         notyf.success("XML importado com sucesso!");
       } catch (err) {
         console.error("Erro ao processar XML:", err);
-        notyf.error("Falha ao processar o XML. Verifique o arquivo.");
+        notyf.error("Falha ao processar o XML.");
       }
     };
     reader.readAsText(file);
   }
 
-
   document.getElementById('xmlFileInput_recusa').addEventListener('change', e => processarXML(e.target.files[0], 'recusa'));
   document.getElementById('xmlFileInput_devolucao').addEventListener('change', e => processarXML(e.target.files[0], 'devolucao'));
 
   /* =====================================================
-   * 4️⃣ Envio do formulário (AJAX)
+   * 3️⃣ Envio do formulário
    * ===================================================== */
   document.getElementById('sendApprovRequest').addEventListener('click', async () => {
     const activeTab = document.querySelector('#returnProcessTabs button.active').id;
     const context = activeTab.includes('recusa') ? 'recusa' : 'devolucao';
-    const form = document.getElementById(`form_${context}`);
-
     const motivo = document.getElementById(`motivo_${context}`).value;
     const codigoErro = document.getElementById(`codigo_erro_${context}`).value;
     const observacoes = document.getElementById(`observacoes_${context}`).value;
-    const gestor = document.getElementById(`gestorSolicitante_${context}`).value;
+    const gestor = document.getElementById(`gestorSolicitante_${context}`)?.value?.trim() || '';
     const cnpj = document.getElementById(`client-cnpj-display_${context}`).textContent;
 
     if (!motivo || !codigoErro || !observacoes || cnpj === 'N/A') {
@@ -178,64 +210,40 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
-    const payload = {
-      tipo: context === 'recusa' ? 'Recusa' : 'Devolução',
-      nomeCliente: document.getElementById(`client-name-display_${context}`).textContent,
-      cnpjCliente: cnpj,
-      motivo,
-      codigoErro,
-      observacao: observacoes,
-      gestorSolicitante: gestor,
-    };
-
     try {
-      // dentro do bloco try do create.js
       const formData = new FormData();
-      formData.append('tipo', payload.tipo);
-      formData.append('nomeCliente', payload.nomeCliente);
-      formData.append('cnpjCliente', payload.cnpjCliente);
-      formData.append('motivo', payload.motivo);
-      formData.append('codigoErro', payload.codigoErro);
-      formData.append('observacao', payload.observacao);
-      formData.append('gestorSolicitante', payload.gestorSolicitante);
+      formData.append('tipo', context === 'recusa' ? 'Recusa' : 'Devolução');
+      formData.append('nomeCliente', document.getElementById(`client-name-display_${context}`).textContent);
+      formData.append('cnpjCliente', cnpj);
+      formData.append('motivo', motivo);
+      formData.append('codigoErro', codigoErro);
+      formData.append('observacao', observacoes);
+      formData.append('gestorSolicitante', gestor);
 
-      // arquivo XML (ajuste o nome conforme validação do controller)
-      const xmlInput = document.getElementById(`xmlFileInput_${context}`);
-      if (xmlInput && xmlInput.files[0]) {
-        formData.append('xml_file', xmlInput.files[0]); // <-- usar snake_case se o controller usa isso
+      // XML extraído
+      if (window._xmlData) {
+        formData.append('recusa_sefaz', window._xmlData.recusa_sefaz || '');
+        formData.append('nf_saida', window._xmlData.nf_saida || '');
+        formData.append('nf_devolucao', window._xmlData.nf_devolucao || '');
+        formData.append('nfo', window._xmlData.nfo || '');
+        formData.append('protocolo', window._xmlData.protocolo || '');
       }
 
-      // coleta os itens da tabela
-      const itens = [];
-      document.querySelectorAll(`#product-table-body_${context} tr`).forEach(tr => {
-        const cols = tr.querySelectorAll('td');
-        if (cols.length === 7 && !cols[0].textContent.includes('Nenhum')) {
-          itens.push({
-            artigo: cols[0].textContent.trim(),
-            descricao: cols[1].textContent.trim(),
-            ncm: cols[2].textContent.trim(),
-            nf_saida: cols[3].textContent.trim(),
-            nf_devolucao: cols[4].textContent.trim(),
-            quantidade: parseFloat(cols[5].textContent.trim().replace(',', '.')),
-            preco_unitario: parseFloat(cols[6].textContent.replace('R$', '').replace(',', '.'))
-          });
-        }
-      });
+      // XML file
+      const xmlInput = document.getElementById(`xmlFileInput_${context}`);
+      if (xmlInput?.files[0]) formData.append('xml_file', xmlInput.files[0]);
+
+      // Itens
+      const itens = window._xmlData?.itens || [];
       formData.append('itens', JSON.stringify(itens));
 
-      const res = await fetch('/return-process', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrf },
-        body: formData
-      });
-
+      const res = await fetch('/return-process', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: formData });
       const data = await res.json();
+
       if (res.ok) {
         notyf.success(data.message || 'Processo salvo com sucesso!');
         setTimeout(() => window.location.href = '/return-process', 1000);
-      } else {
-        notyf.error(data.message || 'Erro ao salvar processo.');
-      }
+      } else notyf.error(data.message || 'Erro ao salvar processo.');
     } catch (err) {
       console.error(err);
       notyf.error("Falha ao comunicar com o servidor.");
@@ -245,73 +253,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-// Toggle de exibição dos itens do XML
-document.querySelectorAll('.toggle-items-btn').forEach(btn => {
-  btn.addEventListener('click', e => {
-    const container = btn.closest('.tab-pane').querySelector('.items-container');
-    const icon = btn.querySelector('i');
-    const showing = container.style.display === 'block';
-
-    if (showing) {
-      container.style.display = 'none';
-      icon.classList.replace('ti-chevron-up', 'ti-chevron-down');
-      btn.innerHTML = '<i class="ti ti-chevron-down me-1"></i> Mostrar Itens';
-    } else {
-      container.style.display = 'block';
-      icon.classList.replace('ti-chevron-down', 'ti-chevron-up');
-      btn.innerHTML = '<i class="ti ti-chevron-up me-1"></i> Ocultar Itens';
-    }
-  });
-});
-document.addEventListener('DOMContentLoaded', function () {
-    console.log("✅ Script do dropdown carregado");
-
-    const btn = document.querySelector('#userMenuButton');
-    if (!btn) {
-      console.warn("❌ Botão #userMenuButton não encontrado!");
-      return;
-    }
-
-    const dropdown = btn.closest('.dropdown')?.querySelector('.dropdown-menu');
-    if (!dropdown) {
-      console.warn("❌ Menu dropdown não encontrado!");
-      return;
-    }
-
-    // Garantir que o bootstrap não interfira
-    btn.removeAttribute('data-bs-toggle');
-    btn.removeAttribute('data-bs-target');
-
-    // Toggle manual do dropdown
-    btn.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      dropdown.classList.toggle('show');
-      console.log("🔁 Toggle menu:", dropdown.classList.contains('show') ? "ABERTO" : "FECHADO");
-    });
-
-    // Fecha ao clicar fora
-    document.addEventListener('click', function (ev) {
-      if (!dropdown.contains(ev.target) && !btn.contains(ev.target)) {
-        dropdown.classList.remove('show');
-      }
-    });
-
-    // Fecha com ESC
-    document.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Escape') {
-        dropdown.classList.remove('show');
-      }
-    });
-
-    // Dark mode toggle
-    const darkBtn = document.querySelector('#toggleDarkMode');
-    if (darkBtn) {
-      darkBtn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        document.body.classList.toggle('dark-mode');
-        const dark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', dark ? 'dark' : 'light');
-        console.log(`🌙 Tema: ${dark ? 'escuro' : 'claro'}`);
-      });
-    }
-  });
