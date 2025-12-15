@@ -12,17 +12,28 @@ class Process extends Model
     protected $fillable = [
         'process_type_id',
         'created_by',
-        'current_workflow_id',
         'status',
+
         'cliente_nome',
         'cliente_cnpj',
-        'nf_saida',
-        'nfo',            // ✅ novo
-        'protocolo',      // ✅
-        'nf_devolucao',
-        'recusa_sefaz',
-        'movimentacao_mercadoria',
+        'motivo',
         'observacoes',
+        'movimentacao_mercadoria',
+        'codigo_erro',
+        'nf_saida',
+        'nf_devolucao',
+        'nfo',
+        'protocolo',
+        'recusa_sefaz',
+        'delivery',
+        'doc_faturamento',
+        'ordem_entrada',
+        'migo',
+
+        // CORRETO: existe no banco
+        'workflow_template_id',
+        'workflow_reason_id',
+        'current_workflow_step_id',
     ];
 
     /* 🔹 Tipo de processo (Ex: Devolução / Recusa) */
@@ -37,25 +48,19 @@ class Process extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /* 🔹 Workflow atual (etapa ativa) */
-    public function currentWorkflow()
-    {
-        return $this->belongsTo(ProcessWorkflow::class, 'current_workflow_id');
-    }
-
     /* 🔹 Itens vinculados ao processo */
     public function items()
     {
         return $this->hasMany(ProcessItem::class, 'process_id');
     }
 
-    /* 🔹 Execuções (histórico de andamento) */
+    /* 🔹 Execuções */
     public function executions()
     {
         return $this->hasMany(ProcessExecution::class, 'process_id');
     }
 
-    /* 🔹 Logs de ações */
+    /* 🔹 Logs */
     public function logs()
     {
         return $this->hasMany(ProcessLog::class, 'process_id');
@@ -67,9 +72,33 @@ class Process extends Model
         return $this->hasMany(ProcessDocument::class, 'process_id');
     }
 
-    /* 🔹 Steps (controle de etapas concluídas ou pendentes) */
+    /* 🔹 Histórico de steps (process_steps) */
     public function steps()
     {
         return $this->hasMany(ProcessStep::class, 'process_id');
+    }
+
+    /* 🔹 Step ATUAL baseado em process_steps */
+    public function currentStep()
+    {
+        return $this->hasOne(ProcessStep::class, 'process_id')->where('is_current', true);
+    }
+
+    /* 🔹 Template do workflow */
+    public function workflowTemplate()
+    {
+        return $this->belongsTo(WorkflowTemplate::class, 'workflow_template_id');
+    }
+
+    /* 🔹 Motivo que escolheu o template */
+    public function workflowReason()
+    {
+        return $this->belongsTo(WorkflowReason::class, 'workflow_reason_id');
+    }
+
+    /* 🔹 Etapa atual real (tabela workflow_steps) */
+    public function currentWorkflowStep()
+    {
+        return $this->belongsTo(WorkflowStep::class, 'current_workflow_step_id');
     }
 }

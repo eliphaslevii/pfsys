@@ -1,183 +1,212 @@
+// ================================================================
+// LAYOUT.JS — ARQUITETURA UNIFICADA (UDHA)
+// ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('⚙️ layout.js carregado');
 
-  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-  const notyf = new Notyf();
+    console.log('⚙️ layout.js (unificado) carregado');
 
-  const sidebar = document.querySelector('aside.navbar-vertical');
-  const toggler = document.getElementById('menu-toggler');
-  const toggleGerenciamento = document.getElementById('toggleGerenciamento');
-  const submenu = document.getElementById('gerenciamentoSubmenu');
-  const chevron = document.getElementById('gerenciamentoChevron');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const notyf = new Notyf({ duration: 2500, position: { x: 'right', y: 'top' } });
 
-  /* ===============================
-     📱 MENU LATERAL (MOBILE)
-  =============================== */
-  function openDrawer() {
-    sidebar.classList.add('show');
-    const backdrop = document.createElement('div');
-    backdrop.className = 'drawer-backdrop';
-    backdrop.id = 'drawerBackdrop';
-    document.body.appendChild(backdrop);
-    backdrop.addEventListener('click', closeDrawer);
-    document.body.style.overflow = 'hidden';
-  }
+    // ================================================================
+    // 📱 MENU MOBILE
+    // ================================================================
+    const sidebar = document.querySelector('aside.navbar-vertical');
+    const toggler = document.getElementById('menu-toggler');
 
-  function closeDrawer() {
-    sidebar.classList.remove('show');
-    document.getElementById('drawerBackdrop')?.remove();
-    document.body.style.overflow = '';
-  }
+    function openDrawer() {
+        sidebar.classList.add('show');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'drawer-backdrop';
+        backdrop.id = 'drawerBackdrop';
+        document.body.appendChild(backdrop);
+        backdrop.addEventListener('click', closeDrawer);
+    }
 
-  toggler?.addEventListener('click', () => {
-    sidebar.classList.contains('show') ? closeDrawer() : openDrawer();
-  });
+    function closeDrawer() {
+        sidebar.classList.remove('show');
+        document.getElementById('drawerBackdrop')?.remove();
+    }
 
-  window.addEventListener('resize', () => {
-    if (window.innerWidth >= 992) closeDrawer();
-  });
+    toggler?.addEventListener('click', () =>
+        sidebar.classList.contains('show') ? closeDrawer() : openDrawer()
+    );
 
-  /* ===============================
-    🧭 SUBMENUS DINÂMICOS UNIVERSAIS
-    =============================== */
-  document.querySelectorAll('.submenu-toggle').forEach(toggle => {
-    toggle.addEventListener('click', e => {
-      e.preventDefault();
-
-      const parent = toggle.closest('.has-submenu');
-      const submenu = parent.querySelector('.submenu');
-      const chevron = toggle.querySelector('.submenu-chevron');
-
-      // Fecha todos os outros submenus antes de abrir o atual
-      document.querySelectorAll('.submenu').forEach(el => {
-        if (el !== submenu) el.style.display = 'none';
-      });
-      document.querySelectorAll('.submenu-chevron').forEach(icon => {
-        if (icon !== chevron) icon.classList.remove('rotate');
-      });
-
-      // Alterna o submenu atual
-      const isOpen = submenu.style.display === 'block';
-      submenu.style.display = isOpen ? 'none' : 'block';
-      chevron.classList.toggle('rotate', !isOpen);
-    });
-  });
-
-
-  /* ===============================
-     🗑️ MODAL UNIVERSAL DE EXCLUSÃO
-  =============================== */
-  const deleteModalEl = document.getElementById('confirmDeleteModal');
-  const confirmBtn = document.getElementById('confirmDeleteBtn');
-
-  if (deleteModalEl && confirmBtn) {
-    const deleteModal = new bootstrap.Modal(deleteModalEl);
-    let deleteUrl = null;
-
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.btn-delete[data-url]');
-      if (!btn) return;
-      e.preventDefault();
-      deleteUrl = btn.dataset.url;
-      deleteModal.show();
-    });
-
-    confirmBtn.addEventListener('click', async () => {
-      if (!deleteUrl) return;
-      confirmBtn.disabled = true;
-      try {
-        const res = await fetch(deleteUrl, {
-          method: 'DELETE',
-          headers: {
-            'X-CSRF-TOKEN': csrf,
-            'Accept': 'application/json'
-          }
+    // ================================================================
+    // 🧭 SUBMENUS
+    // ================================================================
+    document.querySelectorAll('.submenu-toggle').forEach(toggle => {
+        toggle.addEventListener('click', e => {
+            e.preventDefault();
+            const parent = toggle.closest('.has-submenu');
+            const submenu = parent.querySelector('.submenu');
+            submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
         });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          notyf.success(data.message || 'Registro excluído com sucesso!');
-          deleteModal.hide();
-          setTimeout(() => location.reload(), 700);
-        } else {
-          notyf.error(data.message || 'Erro ao excluir registro.');
+    });
+
+    // ================================================================
+    // 🗑️ MODAL UNIVERSAL DE DELETE
+    // ================================================================
+    const deleteModalEl = document.getElementById('confirmDeleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let deleteUrl = null;
+    let deleteTemplateId = null; // ← somente p/ STEPS
+
+    const unifiedSelectors = `
+        .btn-delete-user,
+        .btn-delete-sector,
+        .btn-delete-reason,
+        .btn-delete-template,
+        .btn-delete-step,
+        .btn-delete-level
+    `;
+
+    if (deleteModalEl && confirmDeleteBtn) {
+
+        const deleteModal = new bootstrap.Modal(deleteModalEl);
+
+        // CAPTURA DE CLIQUE
+        document.addEventListener('click', e => {
+            const btn = e.target.closest(unifiedSelectors);
+            if (!btn) return;
+
+            e.preventDefault();
+
+            deleteUrl = btn.dataset.url;
+            deleteTemplateId = btn.dataset.template || null;
+
+            if (!deleteUrl) {
+                console.error('❌ Botão delete sem data-url:', btn);
+                notyf.error('Erro interno.');
+                return;
+            }
+
+            deleteModal.show();
+        });
+
+        // CONFIRMAR EXCLUSÃO
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!deleteUrl) return;
+
+            confirmDeleteBtn.disabled = true;
+
+            try {
+                const res = await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok || !data?.success) {
+                    notyf.error(data?.message || 'Erro ao excluir.');
+                    confirmDeleteBtn.disabled = false;
+                    return;
+                }
+
+                notyf.success(data.message || 'Excluído!');
+
+                deleteModal.hide();
+
+                // STEP EXCLUÍDO → recarregar steps
+                if (deleteTemplateId) {
+                    document.dispatchEvent(new CustomEvent('step-deleted', {
+                        detail: { templateId: deleteTemplateId }
+                    }));
+                } else {
+                    // RESTO → reload da página
+                    setTimeout(() => location.reload(), 300);
+                }
+
+            } catch (err) {
+                console.error(err);
+                notyf.error('Erro de comunicação.');
+            }
+
+            confirmDeleteBtn.disabled = false;
+            deleteUrl = null;
+            deleteTemplateId = null;
+        });
+
+    }
+
+});
+/* ============================================================
+   🌐 FUNÇÕES GLOBAIS — DISPONÍVEIS EM TODO O SISTEMA
+   ============================================================ */
+
+/**
+ * 🔵 Modal de Confirmação Reutilizável
+ * Chamado como:
+ *    confirmDialog("Título", "Mensagem", () => { ... ação ... })
+ */
+window.confirmDialog = function (title, message, onConfirm) {
+
+    const modalEl = document.getElementById("modal-confirm");
+
+    // fallback — caso modal não exista, usa confirm nativo
+    if (!modalEl) {
+        if (confirm(message)) onConfirm();
+        return;
+    }
+
+    // popula conteúdo
+    document.getElementById("modalConfirmTitle").innerText = title;
+    document.getElementById("modalConfirmMessage").innerText = message;
+
+    // limpar event listeners antigos
+    const yesBtn = document.getElementById("modalConfirmYes");
+    const newBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newBtn, yesBtn);
+
+    // ação
+    newBtn.addEventListener("click", () => {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        onConfirm();
+    });
+
+    // mostrar modal
+    new bootstrap.Modal(modalEl).show();
+};
+
+
+/**
+ * 🔵 Loader Global (para telas, tabelas ou botões)
+ * Exemplo:
+ *    loader.show("Carregando...");
+ *    loader.hide();
+ */
+window.loader = {
+    show(message = "Carregando...") {
+        let box = document.getElementById("global-loader");
+        if (!box) {
+            box = document.createElement("div");
+            box.id = "global-loader";
+            box.style = `
+                position: fixed; inset: 0; 
+                background: rgba(0,0,0,0.35);
+                display: flex; align-items: center; justify-content: center;
+                z-index: 9999;
+            `;
+            box.innerHTML = `
+                <div class="p-4 bg-white rounded shadow text-center">
+                    <div class="spinner-border text-primary mb-2"></div>
+                    <div>${message}</div>
+                </div>
+            `;
+            document.body.appendChild(box);
         }
-      } catch (err) {
-        console.error(err);
-        notyf.error('Falha na comunicação com o servidor.');
-      } finally {
-        confirmBtn.disabled = false;
-        deleteUrl = null;
-      }
-    });
-  }
-});
-// Dark Mode Toggle
-document.addEventListener("DOMContentLoaded", function () {
-  const darkBtn = document.getElementById('toggleDarkMode');
-  const body = document.body;
-
-  // aplica o tema salvo
-  if (localStorage.getItem('theme') === 'dark') {
-    body.classList.add('dark-mode');
-  }
-
-  if (darkBtn) {
-    darkBtn.addEventListener('click', () => {
-      body.classList.toggle('dark-mode');
-      const isDark = body.classList.contains('dark-mode');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      const icon = darkBtn.querySelector('i');
-      icon.className = isDark ? 'ti ti-sun me-2 text-warning' : 'ti ti-moon me-2 text-secondary';
-    });
-  }
-});
-
-document.addEventListener('DOMContentLoaded', function () {
-  const btn = document.getElementById('userMenuButton');
-  if (!btn) return;
-  // dropdown-menu é o próximo .dropdown-menu no DOM do mesmo container
-  const dropdown = btn.closest('.dropdown').querySelector('.dropdown-menu');
-
-  // Se existir algum data-bs-* (Bootstrap) e vc não quer usar Bootstrap, remova atributo para evitar conflito:
-  btn.removeAttribute('data-bs-toggle');
-
-  // Toggle ao clicar no botão
-  btn.addEventListener('click', function (ev) {
-    ev.stopPropagation();
-    const isOpen = dropdown.classList.toggle('show');
-    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  });
-
-  // Fecha quando clicar fora
-  document.addEventListener('click', function (ev) {
-    if (!dropdown.classList.contains('show')) return;
-    if (!dropdown.contains(ev.target) && !btn.contains(ev.target)) {
-      dropdown.classList.remove('show');
-      btn.setAttribute('aria-expanded', 'false');
+        box.style.display = "flex";
+    },
+    hide() {
+        const box = document.getElementById("global-loader");
+        if (box) box.style.display = "none";
     }
-  });
+};
 
-  // Fecha com ESC
-  document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape' && dropdown.classList.contains('show')) {
-      dropdown.classList.remove('show');
-      btn.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // Toggle darkmode do dropdown (se exist)
-  const darkBtn = document.getElementById('toggleDarkMode');
-  if (darkBtn) {
-    darkBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      // troca ícone se quiser
-      const i = darkBtn.querySelector('i');
-      if (i) {
-        i.className = isDark ? 'ti ti-sun me-2 text-warning' : 'ti ti-moon me-2 text-secondary';
-      }
-    });
-  }
-});
+console.log("🌐 layout.js carregado — Funções globais disponíveis.");

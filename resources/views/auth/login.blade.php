@@ -1,5 +1,30 @@
 <x-guest-layout>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+        const notyf = new Notyf({
+            duration: 2500,
+            position: { x: "right", y: "top" }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            @if(session('notify_success'))
+                notyf.success("{{ session('notify_success') }}");
+            @endif
+
+            @if(session('notify_error'))
+                notyf.error("{{ session('notify_error') }}");
+            @endif
+
+            @if($errors->any())
+                notyf.error("{{ $errors->first() }}");
+            @endif
+
+});
+    </script>
     <form class="card card-md" method="POST" action="{{ route('login') }}">
         @csrf
         <div class="card-body">

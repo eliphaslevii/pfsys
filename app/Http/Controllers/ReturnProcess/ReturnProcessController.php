@@ -14,9 +14,17 @@ use App\Models\{
     ProcessItem,
     ProcessWorkflow,
     ProcessExecution,
+    WorkflowReason,
+    WorkflowStep,
+    ReturnProcess,
+    ProcessStep,
 };
 use App\Http\Requests\StoreReturnProcessRequest;
 use Exception;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+
 
 class ReturnProcessController extends Controller
 {
@@ -28,18 +36,28 @@ class ReturnProcessController extends Controller
         $this->workflow = $workflow;
     }
 
-    /**
-     * Exibe a página principal do módulo de processos de devolução/recusa.
-     */
+
     public function index()
     {
-        $processes = \App\Models\Process::with(['creator', 'currentWorkflow'])
-            ->whereHas('type', fn($q) => $q->where('name', 'Devolução / Recusa'))
+        $processes = Process::with(['creator', 'currentWorkflowStep', 'type'])
+            ->whereHas(
+                'type',
+                fn($q) =>
+                $q->whereIn('name', ['Recusa', 'Devolução'])
+            )
             ->orderByDesc('id')
             ->get();
 
-        return view('returnProcess.index', compact('processes'));
+        // Agora PEGAMOS os motivos reais do banco
+        $motivos = WorkflowReason::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $solicitantes = User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('returnProcess.index', compact('processes', 'motivos','solicitantes'));
     }
+
 
 
     /**
@@ -49,10 +67,12 @@ class ReturnProcessController extends Controller
     public function data(): JsonResponse
     {
         try {
-            $processes = Process::with(['creator', 'currentWorkflow', 'type'])
-                ->whereHas('type', function ($q) {
-                    $q->whereIn('name', ['Devolução', 'Recusa']); // 👈 aceita ambos
-                })
+            $processes = Process::with(['creator', 'currentWorkflowStep', 'type'])
+                ->whereHas(
+                    'type',
+                    fn($q) =>
+                    $q->whereIn('name', ['Recusa', 'Devolução'])
+                )
                 ->orderByDesc('id')
                 ->get()
                 ->map(function ($p) {
@@ -60,20 +80,28 @@ class ReturnProcessController extends Controller
                         'id' => $p->id,
                         'tipo' => $p->type->name ?? '-',
                         'cliente' => $p->cliente_nome ?? '-',
+                        'motivo' => $p->motivo ?? '-',
+                        'codigoErro' => $p->codigo_erro ?? '-',
                         'cnpj' => $p->cliente_cnpj ?? '-',
                         'status' => $p->status,
-                        'etapa' => $p->currentWorkflow?->step_name ?? '-',
-                        'responsavel' => $p->creator?->name ?? '-',
+                        'etapa' => $p->currentWorkflowStep?->name ?? $p->etapa_atual ?? '-',
+                        'responsavel' => $p->creator?->name ?? $p->responsavelInterno ?? '-',
                         'created_at' => $p->created_at?->format('d/m/Y H:i'),
                     ];
                 });
 
             return response()->json(['data' => $processes]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
+
             Log::error('Erro ao carregar lista de processos: ' . $e->getMessage());
-            return response()->json(['data' => [], 'error' => $e->getMessage()], 500);
+
+            return response()->json([
+                'data' => [],
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
+
 
 
     /**
@@ -81,6 +109,7 @@ class ReturnProcessController extends Controller
      */
     public function create()
     {
+        
         return view('returnProcess.create');
     }
 
@@ -89,11 +118,10 @@ class ReturnProcessController extends Controller
      */
     public function store(Request $request)
     {
-
-        \Log::info('📥 Dados recebidos no store:', $request->all());
+        Log::info('📥 Dados recebidos no store:', $request->all());
 
         try {
-            // 🔹 Validação base (campos obrigatórios do formulário)
+
             $validated = $request->validate([
                 'tipo' => 'required|string',
                 'nomeCliente' => 'required|string',
@@ -104,67 +132,140 @@ class ReturnProcessController extends Controller
                 'gestorSolicitante' => 'required|string',
                 'xml_file' => 'nullable|file|mimes:xml|max:5120',
                 'itens' => 'required',
-                // 🔹 Campos opcionais vindos do XML
+
                 'nf_saida' => 'nullable|string',
                 'nf_devolucao' => 'nullable|string',
                 'recusa_sefaz' => 'nullable|string',
+                'nfo' => 'nullable|string',
+                'protocolo' => 'nullable|string',
             ]);
+            // 🔒 Validações exclusivas Recusa / Devolução
+            if ($validated['tipo'] === 'Recusa') {
 
-
-            // 🔹 Trata "itens" (aceita string JSON ou array)
-            $itens = $validated['itens'];
-            if (is_string($itens)) {
-                $itens = json_decode($itens, true);
+                if (!empty($validated['nf_devolucao']) || !empty($validated['nfo'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Para processos do tipo RECUSA não é permitido enviar campos de devolução (nf_devolucao, nfo).',
+                    ], 422);
+                }
             }
+
+            if ($validated['tipo'] === 'Devolução') {
+
+                if (!empty($validated['nf_saida']) || !empty($validated['recusa_sefaz'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Para processos do tipo DEVOLUÇÃO não é permitido enviar campos de recusa (nf_saida, recusa_sefaz).',
+                    ], 422);
+                }
+            }
+
+            // -------------------------
+            // Trata itens
+            // -------------------------
+            $itens = is_string($validated['itens'])
+                ? json_decode($validated['itens'], true)
+                : $validated['itens'];
 
             if (!is_array($itens) || count($itens) === 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Nenhum item informado ou formato inválido.',
+                    'message' => 'Nenhum item informado.',
                 ], 422);
             }
 
-            // 🔹 Cria ou busca o tipo de processo
-            $processType = ProcessType::firstOrCreate(
-                ['name' => $validated['tipo']],
-                ['description' => "Tipo criado automaticamente."]
-            );
+            // -------------------------
+            // ProcessType único: Devolução / Recusa
+            // -------------------------
+            $processType = ProcessType::where('name', $validated['tipo'])->first();
 
-            $userId = Auth::id() ?? 1;
+            if (!$processType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipo de processo inválido. Deve ser Recusa ou Devolução.',
+                ], 422);
+            }
 
-            // 🔹 Salva XML, se houver
+
+            $userId = Auth::id();
+
+            // -------------------------
+            // Upload XML
+            // -------------------------
             $xmlPath = $request->hasFile('xml_file')
                 ? $request->file('xml_file')->store('processes/xmls', 'public')
                 : null;
 
-            // 🔹 Cria o processo principal com campos adicionais extraídos do XML
+            // -------------------------
+            // 1) Encontra o motivo correto
+            // -------------------------
+            $reason = WorkflowReason::where('name', $validated['motivo'])
+                ->whereHas('template', function ($q) use ($processType) {
+                    $q->where('process_type_id', $processType->id);
+                })
+                ->first();
+
+            if (!$reason) {
+                Log::error("❌ Motivo '{$validated['motivo']}' não vinculado a nenhum fluxo.");
+                return response()->json([
+                    'success' => false,
+                    'message' => "Nenhum fluxo está configurado para o motivo '{$validated['motivo']}'.",
+                ], 422);
+            }
+
+            // -------------------------
+            // 2) Busca primeira etapa do fluxo
+            // -------------------------
+            $firstStep = WorkflowStep::where('workflow_template_id', $reason->workflow_template_id)
+                ->orderBy('order', 'asc')
+                ->first();
+
+            if (!$firstStep) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'O fluxo selecionado não possui etapas.',
+                ], 422);
+            }
+
+            // -------------------------
+            // 3) Criar processo
+            // -------------------------
             $process = Process::create([
                 'process_type_id' => $processType->id,
                 'created_by' => $userId,
-                'status' => 'Aberto',
                 'cliente_nome' => $validated['nomeCliente'],
                 'cliente_cnpj' => $validated['cnpjCliente'],
                 'observacoes' => $validated['observacao'],
-                'movimentacao_mercadoria' => false,
-                'nf_saida' => $request->input('nf_saida'),
-                'nf_devolucao' => $request->input('nf_devolucao'),
-                'nfo' => $request->input('nfo'),
-                'protocolo' => $request->input('protocolo'),
-                'recusa_sefaz' => $request->input('recusa_sefaz'),
+                'status' => 'Pendente Comercial',
+                'etapa_atual' => 'Aguardando Aprovação Comercial',
+                'motivo' => $validated['motivo'],
+                'workflow_reason_id' => $reason->id,
+                'workflow_template_id' => $reason->workflow_template_id,
+                'current_workflow_step_id' => $firstStep->id,
+                'codigo_erro' => $validated['codigoErro'],
+                'nf_saida' => $validated['nf_saida'] ?? null,
+                'nf_devolucao' => $validated['nf_devolucao'] ?? null,
+                'nfo' => $validated['nfo'] ?? null,
+                'protocolo' => $validated['protocolo'] ?? null,
+                'recusa_sefaz' => $validated['recusa_sefaz'] ?? null,
             ]);
 
-            // 🔹 Cria os itens vinculados
+            // -------------------------
+            // 4) Itens
+            // -------------------------
             foreach ($itens as $item) {
                 $process->items()->create([
-                    'artigo' => $item['artigo'] ?? '-',
-                    'descricao' => $item['descricao'] ?? '-',
+                    'artigo' => $item['artigo'],
+                    'descricao' => $item['descricao'],
                     'ncm' => $item['ncm'] ?? null,
                     'quantidade' => $item['quantidade'] ?? 0,
                     'preco_unitario' => $item['preco_unitario'] ?? 0,
                 ]);
             }
 
-            // 🔹 Anexa XML ao processo (opcional)
+            // -------------------------
+            // 5) Documento XML
+            // -------------------------
             if ($xmlPath) {
                 $process->documents()->create([
                     'file_name' => basename($xmlPath),
@@ -174,52 +275,61 @@ class ReturnProcessController extends Controller
                 ]);
             }
 
-            // 🚀 Define a primeira etapa do workflow automaticamente
-            $firstStep = ProcessWorkflow::where('process_type_id', $processType->id)
-                ->orderBy('id', 'asc')
-                ->first();
+            // -------------------------
+            // 6) Execução inicial
+            // -------------------------
+            ProcessExecution::create([
+                'process_id' => $process->id,
+                'current_workflow_step_id' => $firstStep->id,
+                'assigned_to' => $userId,
+                'status' => 'Em Andamento',
+                'observations' => 'Execução inicial gerada automaticamente.',
+            ]);
+            ProcessStep::create([
+                'process_id' => $process->id,
+                'workflow_step_id' => $firstStep->id,
+                'status' => 'pending', // padrão da tabela
+                'is_current' => true,
+            ]);
+            // -------------------------
+            // 8) Enviar e-mail para o gestor comercial responsável pela etapa
+            // -------------------------
+            try {
+                $emailsGerencia = \App\Models\User::where('sector_id', $firstStep->sector_id)
+                    ->where('level_id', $firstStep->required_level_id)
+                    ->pluck('email')
+                    ->toArray();
 
-            if ($firstStep) {
-                $process->update([
-                    'current_workflow_id' => $firstStep->id,
-                    'status' => 'Em Andamento',
-                ]);
-
-                ProcessExecution::create([
-                    'process_id' => $process->id,
-                    'current_workflow_id' => $firstStep->id,
-                    'assigned_to' => $userId,
-                    'status' => 'Em Andamento',
-                    'observations' => 'Execução inicial do processo criada automaticamente.',
-                ]);
+                foreach ($emailsGerencia as $email) {
+                    Mail::raw(
+                        "Novo processo #{$process->id} está aguardando aprovação comercial.",
+                        function ($mail) use ($email, $process) {
+                            $mail->to($email)
+                                ->subject("Processo #{$process->id} – Aguardando Aprovação Comercial");
+                        }
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::error("Erro ao enviar e-mail para gestor comercial: " . $e->getMessage());
             }
 
-
-            \Log::info("✅ Processo criado com sucesso: #{$process->id}");
+            Log::info("✅ Processo criado com sucesso: {$process->id}");
 
             return response()->json([
                 'success' => true,
                 'message' => 'Processo criado com sucesso!',
                 'id' => $process->id,
             ]);
-        }
+        } catch (\Exception $e) {
 
-        // 🔹 Captura de erros de validação
-        catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro de validação.',
-                'errors' => $e->errors(),
-            ], 422);
-        }
+            Log::error("❌ Erro ao criar processo: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
 
-        // 🔹 Captura de exceções gerais
-        catch (\Exception $e) {
-            \Log::error('❌ Erro ao criar processo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Erro interno ao salvar processo.',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -231,7 +341,7 @@ class ReturnProcessController extends Controller
     public function show($id, Request $request)
     {
         try {
-            $process = Process::with(['items', 'currentWorkflow', 'creator', 'type'])->findOrFail($id);
+            $process = Process::with(['items', 'currentWorkflowStep', 'creator', 'type'])->findOrFail($id);
 
             // 🔹 Mapeia todos os dados, inclusive os campos XML
             $payload = [
@@ -251,6 +361,7 @@ class ReturnProcessController extends Controller
                 'doc_faturamento' => $process->doc_faturamento,
                 'ordem_entrada' => $process->ordem_entrada,
                 'migo' => $process->migo,
+
 
                 // 🔹 Itens do processo
                 'items' => $process->items->map(function ($i) {
@@ -272,7 +383,7 @@ class ReturnProcessController extends Controller
             // 🔹 Caso contrário, exibe a view normalmente
             return view('returnProcess.show', compact('process'));
         } catch (\Exception $e) {
-            \Log::error("Erro ao carregar processo {$id}: " . $e->getMessage());
+            Log::error("Erro ao carregar processo {$id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao carregar o processo.',
@@ -324,5 +435,4 @@ class ReturnProcessController extends Controller
             ], 500);
         }
     }
-
 }

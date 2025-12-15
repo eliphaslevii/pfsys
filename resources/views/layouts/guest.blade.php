@@ -8,8 +8,6 @@
 
     <!-- Tabler CSS -->
     <link href="{{ asset('tabler/css/tabler.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('tabler/css/tabler-vendors.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('tabler/css/demo.min.css') }}" rel="stylesheet">
 </head>
 <body class="d-flex flex-column bg-body-tertiary">
 

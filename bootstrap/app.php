@@ -15,10 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => HasPermission::class,
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-            'haspermission' => \App\Http\Middleware\HasPermission::class, //
+            'haspermission' => \App\Http\Middleware\HasPermission::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            'nfe/espelho/lote',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
+    ->withSingletons([
+        Illuminate\Contracts\Console\Kernel::class => App\Console\Kernel::class,
+    ])
     ->create();

@@ -98,7 +98,7 @@
                                         data-modal="#editSectorModal">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-delete"
+                                    <button class="btn btn-sm btn-outline-danger btn-delete-sector"
                                         data-url="{{ route('admin.sectors.destroy', $sector) }}">
                                         <i class="ti ti-trash"></i>
                                     </button>
@@ -144,7 +144,7 @@
                                         <i class="ti ti-edit"></i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-outline-danger btn-delete"
+                                    <button class="btn btn-sm btn-outline-danger btn-delete-level"
                                         data-url="{{ route('admin.levels.destroy', $l) }}">
                                         <i class="ti ti-trash"></i>
                                     </button>
@@ -191,7 +191,8 @@
                             </select>
                         </div>
                         <div class="form-check">
-                            <input type="checkbox" name="is_active" class="form-check-input" checked>
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" class="form-check-input" checked>
                             <label class="form-check-label">Ativo</label>
                         </div>
                     </div>
@@ -234,7 +235,9 @@
                             </select>
                         </div>
                         <div class="form-check">
-                            <input type="checkbox" name="is_active" class="form-check-input">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" class="form-check-input">
+
                             <label class="form-check-label">Ativo</label>
                         </div>
                     </div>
@@ -322,6 +325,11 @@
             </div>
         </div>
     </div>
-
+    @vite([
+        'resources/js/modules/sectors/create.js',
+        'resources/js/modules/sectors/edit.js',
+        'resources/js/modules/levels/create.js',
+        'resources/js/modules/levels/edit.js',
+    ])
 
 @endsection

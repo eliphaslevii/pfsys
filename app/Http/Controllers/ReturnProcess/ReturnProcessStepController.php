@@ -3,117 +3,176 @@
 namespace App\Http\Controllers\ReturnProcess;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Models\Process;
-use App\Services\WorkflowService;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\StepUpdateRequest;
-use Exception;
+use Illuminate\Support\Facades\Log;
+
+use App\Models\{
+    Process,
+    WorkflowStep,
+    ReturnProcessStep,
+    WorkflowReason,
+    ProcessStep
+};
 
 class ReturnProcessStepController extends Controller
 {
-    protected WorkflowService $workflow;
-
-    public function __construct(WorkflowService $workflow)
-    {
-        $this->middleware('auth');
-        $this->workflow = $workflow;
-    }
-
     /**
-     * Atualiza o passo (etapa) de um processo.
-     * Accepts action: advance | reject | rollback
+     * Avança o processo para o próximo step no workflow.
      */
-    public function update($id, StepUpdateRequest $request): JsonResponse
+    public function update($id): JsonResponse
     {
         try {
             $process = Process::findOrFail($id);
-            $action = $request->input('action', 'advance');
 
-            // optional: guard clause to block actions on finalized/rejected processes
-            if (in_array($process->status, ['Finalizado', 'Recusado'])) {
+            // Step atual
+            $currentStep = ReturnProcessStep::where('process_id', $process->id)
+                ->where('workflow_step_id', $process->workflow_step_id)
+                ->first();
+
+            if (!$currentStep) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Ação inválida: processo já está com status '{$process->status}'."
-                ], 400);
+                    'message' => 'Nenhum step ativo encontrado para este processo.'
+                ], 404);
             }
 
-            $user = Auth::user();
-            $result = null;
+            // 🔹 Marcar step atual como concluído
+            $currentStep->update([
+                'status' => 'Concluído',
+                'completed_at' => now(),
+            ]);
 
-            switch ($action) {
-                case 'advance':
-                    // $request may contain extra fields (docFaturamento, delivery, migo, comment...)
-                    $result = $this->workflow->advance($process, $request->only([
-                        'docFaturamento', 'ordemEntrada', 'delivery', 'migo', 'comment', 'skip_email'
-                    ]));
+            // 🔹 Buscar workflow do motivo
+            $reason = WorkflowReason::find($process->workflow_reason_id);
+            $templateId = $reason->workflow_template_id;
 
-                    // WorkflowResult standard: ->success, ->message, ->nextStep
-                    if (!($result instanceof \WorkflowResult ?? false) && is_object($result)) {
-                        // backwards-compat fallback if your WorkflowService returns ProcessWorkflow
-                        $nextStepName = $result->step_name ?? ($result->nextStep->step_name ?? null);
-                    } else {
-                        $nextStepName = $result->nextStep->step_name ?? null;
-                    }
+            // 🔹 Buscar todos os steps do fluxo
+            $steps = WorkflowStep::where('workflow_template_id', $templateId)
+                ->orderBy('order', 'asc')
+                ->get();
 
-                    return response()->json([
-                        'success' => true,
-                        'message' => $result->message ?? 'Etapa avançada com sucesso.',
-                        'newStep' => $nextStepName
-                    ]);
-                    break;
+            // 🔹 Encontrar o próximo step
+            $currentIndex = $steps->search(fn($s) => $s->id == $currentStep->workflow_step_id);
+            $nextStep = $steps[$currentIndex + 1] ?? null;
 
-                case 'reject':
-                    $comment = $request->input('comment') ?? '';
-                    if (empty(trim($comment))) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Comentário obrigatório para rejeitar.'
-                        ], 422);
-                    }
+            // =====================
+            // 🔚 SE NÃO TEM PRÓXIMO STEP → FINALIZAR
+            // =====================
+            if (!$nextStep) {
+                $process->update([
+                    'status' => 'Finalizado',
+                    'etapa_atual' => 'Finalizado',
+                    'responsavel_setor' => null,
+                ]);
 
-                    $result = $this->workflow->reject($process, $comment);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => $result->message ?? 'Processo rejeitado com sucesso.',
-                        'newStep' => null
-                    ]);
-                    break;
-
-                case 'rollback':
-                    $result = $this->workflow->rollback($process);
-
-                    $previousName = $result->nextStep->step_name ?? null;
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => $result->message ?? 'Processo retornado para etapa anterior.',
-                        'newStep' => $previousName
-                    ]);
-                    break;
-
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Ação inválida.'
-                    ], 400);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Processo finalizado com sucesso.',
+                    'newStep' => null
+                ]);
             }
-        } catch (Exception $e) {
-            Log::error("Erro ao atualizar etapa do processo #{$id}: {$e->getMessage()}", [
+
+            // =====================
+            // 👉 CRIAR O NOVO STEP
+            // =====================
+            ReturnProcessStep::create([
+                'process_id' => $process->id,
+                'workflow_step_id' => $nextStep->id,
+                'status' => 'Em Andamento',
+            ]);
+
+            // =====================
+            // 👉 ATUALIZAR PROCESSO
+            // =====================
+            $process->update([
+                'workflow_step_id' => $nextStep->id,
+                'responsavel_setor' => $nextStep->setor_id,
+                'etapa_atual' => $nextStep->name,
+                'status' => 'Em Execução',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Etapa concluída. Fluxo avançado.',
+                'newStep' => $nextStep->name
+            ]);
+        }
+        catch (\Throwable $e) {
+
+            Log::error("Erro ao avançar processo {$id}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Se for ModelNotFoundException, já capturamos com findOrFail e o Laravel vai 404, mas mantemos fallback:
-            $status = $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ? 404 : 500;
-
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao atualizar a etapa do processo.',
-                'error' => $e->getMessage(),
-            ], $status);
+                'message' => 'Erro ao avançar etapa.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
+
+    public function approve(Process $process)
+{
+    try {
+        $current = $process->currentWorkflowStep;
+
+        // Marcar step atual como concluído
+        $process->steps()->where('is_current', true)->update([
+            'status' => 'approved',
+            'is_current' => false,
+            'completed_at' => now(),
+        ]);
+
+        // Buscar próximo
+        $nextStep = WorkflowStep::find($current->next_step_id);
+
+        // Se não há etapa => finalizar processo
+        if (!$nextStep) {
+            $process->update([
+                'status' => 'Finalizado',
+                'current_workflow_step_id' => null,
+            ]);
+
+            ProcessStep::create([
+                'process_id' => $process->id,
+                'workflow_step_id' => null,
+                'status' => 'approved',
+                'is_current' => false,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Processo finalizado com sucesso.'
+            ]);
+        }
+
+        // Criar novo step
+        ProcessStep::create([
+            'process_id'        => $process->id,
+            'workflow_step_id'  => $nextStep->id,
+            'status'            => 'pending',
+            'is_current'        => true,
+        ]);
+
+        // Atualizar processo
+        $process->update([
+            'current_workflow_step_id' => $nextStep->id,
+            'status' => 'Em Execução',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Etapa avançada para {$nextStep->name}"
+        ]);
+
+    } catch (\Throwable $e) {
+        Log::error("Erro ao aprovar processo {$process->id}: " . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Erro ao avançar etapa.'
+        ], 500);
+    }
+}
+
 }

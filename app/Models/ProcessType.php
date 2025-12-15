@@ -29,4 +29,9 @@ class ProcessType extends Model
     {
         return $this->hasMany(ProcessNotification::class);
     }
+    public function workflowTemplates()
+    {
+        return $this->hasMany(\App\Models\WorkflowTemplate::class);
+    }
+
 }

@@ -10,16 +10,35 @@ class SectorSeeder extends Seeder
     public function run(): void
     {
         $sectors = [
-            ['name' => 'Comercial', 'description' => 'Responsável por abertura e controle de processos comerciais.'],
-            ['name' => 'Logística', 'description' => 'Gerencia transporte, recebimento e devoluções.'],
-            ['name' => 'Fiscal', 'description' => 'Responsável pela parte fiscal e emissão de notas.'],
-            ['name' => 'Financeiro', 'description' => 'Contas a pagar e faturamento.'],
-            ['name' => 'Gerência de Produtos', 'description' => 'Controle de produtos e planejamento.'],
-            ['name' => 'Administrativo', 'description' => 'Setor administrativo com acesso total.'],
+            [
+                'name' => 'Comercial',
+                'description' => 'Setor responsável por abrir, validar e acompanhar processos.'
+            ],
+            [
+                'name' => 'Logística',
+                'description' => 'Transporte, recebimento e devoluções.'
+            ],
+            [
+                'name' => 'Fiscal',
+                'description' => 'Emissão, análise e correção de notas fiscais.'
+            ],
+            [
+                'name' => 'Financeiro',
+                'description' => 'Faturamento, crédito, cobrança e baixas financeiras.'
+            ],
+            [
+                'name' => 'Administrativo',
+                'description' => 'Configurações gerais e administração do sistema.'
+            ],
         ];
 
         foreach ($sectors as $sector) {
-            Sector::updateOrCreate(['name' => $sector['name']], $sector);
+            Sector::updateOrCreate(
+                ['name' => $sector['name']],
+                $sector
+            );
         }
+
+        echo "✅ Sectors atualizados corretamente.\n";
     }
 }

@@ -1,409 +1,574 @@
-    :root {
-      --sidebar-bg: #354A5F;
-      --sidebar-hover: #475E75;
-      --sidebar-text: #FFFFFF;
-      --sidebar-muted: #cbd5e1;
-      --border-color: #4a6075;
-      --drawer-width: 260px;
-      --primary-color: #206bc4;
-      --bg-light: #f8f9fb;
-      --card-bg: #ffffff;
-      --border-color: #e0e6ed;
-      --text-muted: #6c757d;
-      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
-    }
+/* =========================================
+   1. VARIÁVEIS GLOBAIS (:root)
+   ========================================= */
+:root {
+    /* Layout & Sidebar */
+    --drawer-width: 260px;
+    --sidebar-bg: #1f2a36;
+    --sidebar-hover: #2b3a48;
+    --sidebar-text: #ffffff;
+    --sidebar-muted: #c3ccd4;
+    
+    /* Colors & Themes */
+    --primary-color: #206bc4;
+    --primary-color-hover: #1a569d; /* Adicionado para hover */
+    --bg-light: #f8f9fb;
+    --card-bg: #ffffff;
+    --border-color: #e0e6ed;
+    --text-muted: #6c757d;
+    
+    /* Shadows & Radius */
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+    --radius-md: 0.5rem;
 
-    body {
-      background-color: var(--bg-light);
-      color: #222;
-      font-family: 'Inter', sans-serif;
-    }
+    /* SAP Fiori / Semantic Colors */
+    --sap-success-bg: #f5fae5;
+    --sap-success-text: #36783d;
+    --sap-warning-bg: #fff8e6;
+    --sap-warning-text: #b05c06;
+    --sap-error-bg: #fdedf0;
+    --sap-error-text: #b00620;
+    --sap-neutral-bg: #f2f4f7;
+    --sap-neutral-text: #5d6876;
+    
+    /* SAP Specifics */
+    --sap-shell-bg: #1d2d3e;
+    --sap-bg-body: #f5f7fa;
+    --sap-bg-surface: #ffffff;
+    --sap-bg-hover: #eaecee;
+    --sap-border-color: #d1d9e0;
+    --sap-border-radius: 0.5rem;
+    --sap-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+    --sap-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
 
-    .page-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1.5rem;
-    }
+/* =========================================
+   2. RESET & BASE
+   ========================================= */
+body {
+    background-color: var(--bg-light);
+    color: #222;
+    font-family: 'Inter', sans-serif;
+}
 
-    /* CARDS */
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 1rem;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow 0.2s ease-in-out;
-    }
+.page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
 
-    .card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
+.drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 1200;
+}
 
-    .card-header {
-      background-color: transparent;
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 1.5rem;
-      font-weight: 600;
-      font-size: 1.25rem;
-      color: #212529;
-    }
+/* =========================================
+   3. SIDEBAR & NAVIGATION
+   ========================================= */
+aside.navbar-vertical {
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    transition: transform 0.3s ease;
+    width: var(--drawer-width);
+    z-index: 1250;
+}
 
-    /* TABELAS */
-    .table {
-      border-radius: 0.75rem;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
+.navbar-vertical .nav-link {
+    color: var(--sidebar-muted);
+    border-radius: 6px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 14px;
+}
 
-    .table th {
-      background-color: #f1f3f5;
-      color: #333;
-    }
+.navbar-vertical .nav-link:hover,
+.navbar-vertical .nav-link.active {
+    background-color: var(--sidebar-hover);
+    color: #fff !important;
+}
 
-    .table-striped tbody tr:nth-of-type(odd) {
-      background-color: #fafafa;
-    }
+.navbar-vertical .nav-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
 
-    /* FORMULÁRIOS */
-    .form-control,
-    .form-select {
-      border-radius: 0.6rem;
-      border: 1px solid var(--border-color);
-      box-shadow: none;
-      padding: 0.6rem 0.75rem;
-      font-size: 0.95rem;
-      transition: all 0.15s ease-in-out;
-    }
+.sidebar-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: visible !important;
+    z-index: 999;
+}
 
-    .btn-primary {
-      background-color: var(--primary-color);
-      border-color: var(--primary-color);
-      box-shadow: var(--shadow-sm);
-    }
+.sidebar-footer .avatar {
+    width: 38px;
+    height: 38px;
+    background: var(--sidebar-hover);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
 
-    .btn-primary:hover {
-      background-color: #1858a8;
-    }
+.sidebar-footer .user-info {
+    margin-left: 10px;
+}
 
-    .form-control:focus,
-    .form-select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.1);
-    }
+.sidebar-footer .user-info .name {
+    font-weight: 600;
+    color: #fff;
+    line-height: 1;
+}
 
-    /* SIDEBAR */
+.sidebar-footer .btn {
+    cursor: pointer;
+}
+
+/* Dropdown do Footer Sidebar */
+.sidebar-footer .dropdown-menu {
+    position: absolute !important;
+    bottom: calc(100% + 10px); /* abre pra cima */
+    top: auto !important;
+    left: 0;
+    right: 0;
+    display: none;
+    background-color: var(--card-bg);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-footer .dropdown-menu.show {
+    display: block !important;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Topbar Mobile */
+.mobile-topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    z-index: 1300;
+}
+
+/* =========================================
+   4. CARDS
+   ========================================= */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #212529;
+}
+
+/* =========================================
+   5. TABLES
+   ========================================= */
+.table th {
+    background-color: #f5f7fa;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--sap-border-color);
+}
+
+.table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--sap-border-color);
+    vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* =========================================
+   6. FORMS & INPUTS
+   ========================================= */
+.form-control,
+.form-select {
+    border-radius: 0.6rem;
+    border: 1px solid #d9dee3 !important; /* Tabler standard */
+    background-color: #fff !important;
+    color: #212529;
+    box-shadow: none !important;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.15rem rgba(32, 107, 196, 0.25) !important;
+    outline: none !important;
+}
+
+/* Correção Select Chrome/Edge */
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 0.75em;
+}
+
+input[type="file"].form-control {
+    padding: 0.4rem 0.75rem;
+}
+
+/* =========================================
+   7. BUTTONS
+   ========================================= */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: 0 6px 18px rgba(32, 107, 196, 0.08);
+    transition: background-color .12s ease, transform .08s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--primary-color-hover) !important;
+    transform: translateY(-1px);
+}
+
+.btn i {
+    pointer-events: none;
+}
+
+/* Toggle/Action Button */
+.toggle-items-btn {
+    color: var(--primary-color);
+    border-color: var(--primary-color) !important;
+    background-color: transparent !important;
+    transition: all 0.15s ease;
+    padding: 0.375rem 0.6rem;
+    font-size: 0.875rem;
+}
+
+.toggle-items-btn:hover,
+.toggle-items-btn:focus {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px rgba(32, 107, 196, 0.12);
+}
+
+.toggle-items-btn i {
+    vertical-align: middle;
+}
+
+/* =========================================
+   8. COMPONENTS & UTILITIES
+   ========================================= */
+/* Client Info Box */
+.client-info-box {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    border-radius: var(--sap-border-radius);
+    border-left: 4px solid var(--primary-color);
+    background: var(--sap-bg-surface);
+    box-shadow: var(--sap-shadow-sm);
+}
+
+/* Animations */
+.submenu {
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.rotate {
+    transform: rotate(180deg);
+    transition: transform 0.25s ease;
+}
+
+.items-container {
+    display: none;
+    transition: all 0.25s ease-in-out;
+}
+
+/* Badges / Pills */
+.fw-semibold {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    border: 1px solid transparent;
+}
+
+.fw-semibold.text-success {
+    background-color: var(--sap-success-bg);
+    color: var(--sap-success-text);
+    border-color: rgba(54, 120, 61, 0.1);
+}
+
+.fw-semibold.text-danger {
+    background-color: var(--sap-error-bg);
+    color: var(--sap-error-text);
+    border-color: rgba(176, 6, 32, 0.1);
+}
+
+.fw-semibold.text-warning {
+    background-color: var(--sap-warning-bg);
+    color: var(--sap-warning-text);
+    border-color: rgba(176, 92, 6, 0.1);
+}
+
+.fw-semibold.text-muted {
+    background-color: var(--sap-neutral-bg);
+    color: var(--sap-neutral-text);
+    border-color: rgba(93, 104, 118, 0.1);
+}
+
+.btn-pill i {
+    margin-right: .35rem;
+}
+
+/* =========================================
+   9. SAP FIORI SKIN (OVERRIDES)
+   ========================================= */
+/* Container - Fiori Card */
+.fiori-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+/* Object Header */
+.fiori-header {
+    padding: 1.5rem 2rem 0.5rem 2rem;
+    background: #fff;
+}
+
+.fiori-title {
+    font-family: "72", "Segoe UI", sans-serif;
+    font-weight: 300;
+    color: #32363a;
+    margin-bottom: 0.25rem;
+}
+
+/* Icon Tab Bar */
+.fiori-tabs {
+    border-bottom: 1px solid #d9d9d9;
+    padding-left: 1.5rem;
+}
+
+.fiori-tabs .nav-link {
+    border: none !important;
+    color: #6a6d70;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.fiori-tabs .nav-link:hover {
+    color: #0854a0;
+    background: #f5f7f9;
+}
+
+.fiori-tabs .nav-link.active {
+    color: #0854a0; /* SAP Blue */
+    background-color: transparent !important;
+    border-bottom-color: #0854a0 !important;
+}
+
+.fiori-tabs i {
+    font-size: 1.1em;
+    vertical-align: text-bottom;
+}
+
+/* Footer Toolbar */
+.fiori-footer {
+    background-color: #fff;
+    border-top: 1px solid #d9d9d9;
+    padding: 0.75rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botões Fiori */
+.btn-fiori-primary {
+    background-color: #0854a0;
+    border-color: #0854a0;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.btn-fiori-primary:hover {
+    background-color: #064282;
+}
+
+.btn-fiori-ghost {
+    background: transparent;
+    color: #0854a0;
+    border: 1px solid #0854a0;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* =========================================
+   10. MEDIA QUERIES & RESPONSIVIDADE
+   ========================================= */
+
+/* Desktop (Large Screens) */
+@media (min-width: 992px) {
     aside.navbar-vertical {
-      background: var(--sidebar-bg);
-      color: var(--sidebar-text);
-      transition: transform 0.3s ease;
-      width: var(--drawer-width);
-      z-index: 1250;
-    }
-
-    .navbar-vertical .nav-link {
-      color: var(--sidebar-muted);
-      border-radius: 6px;
-      font-weight: 400;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 10px 14px;
-    }
-
-    .navbar-vertical .nav-link:hover,
-    .navbar-vertical .nav-link.active {
-      background-color: var(--sidebar-hover);
-      color: #fff !important;
-    }
-
-    .navbar-vertical .nav-icon {
-      font-size: 1.2rem;
-      margin-right: 10px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid var(--border-color);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .sidebar-footer .avatar {
-      width: 38px;
-      height: 38px;
-      background: var(--sidebar-hover);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-    }
-
-    .sidebar-footer .user-info {
-      margin-left: 10px;
-    }
-
-    .sidebar-footer .user-info .name {
-      font-weight: 600;
-      color: #fff;
-      line-height: 1;
-    }
-
-    /* Responsividade */
-    @media (min-width: 992px) {
-      aside.navbar-vertical {
         position: fixed;
         height: 100%;
         left: 0;
         top: 0;
         transform: translateX(0);
         border-right: 1px solid var(--border-color);
-      }
+    }
 
-      .page-wrapper {
+    .page-wrapper {
         margin-left: var(--drawer-width);
         padding: 20px;
-      }
+    }
 
-      .mobile-topbar {
+    .mobile-topbar {
         display: none;
-      }
     }
 
-    /* Corrige modais centralizados com sidebar Tabler */
-    @media (min-width: 992px) {
-      .modal-dialog {
+    /* Corrige deslocamento do Modal por causa da Sidebar */
+    .modal-dialog {
         transform: translate(calc(var(--drawer-width) / 2), 0) !important;
-      }
     }
+}
 
-    @media (max-width: 991.98px) {
-      .modal-dialog {
-        transform: none !important;
-      }
-    }
-
-    @media (max-width: 991.98px) {
-      aside.navbar-vertical {
+/* Mobile / Tablet (Small Screens) */
+@media (max-width: 991.98px) {
+    aside.navbar-vertical {
         position: fixed;
         left: 0;
         top: 0;
         height: 100%;
         transform: translateX(-100%);
-      }
+    }
 
-      aside.navbar-vertical.show {
+    aside.navbar-vertical.show {
         transform: translateX(0);
         box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
-      }
+    }
 
-      .page-wrapper {
+    .page-wrapper {
         margin: 0;
         padding: 18px;
-      }
     }
 
-    .drawer-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .45);
-      z-index: 1200;
+    .modal-dialog {
+        transform: none !important;
     }
-
-    .mobile-topbar {
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-      z-index: 1300;
-    }
-
-    .submenu {
-      display: none;
-      transition: all 0.3s ease;
-    }
-
-    .rotate {
-      transform: rotate(180deg);
-      transition: transform 0.25s ease;
-    }
-
-    .items-container {
-      transition: all 0.25s ease-in-out;
-    }
-
-    /* Corrige bordas escuras de selects e inputs */
-    .form-select,
-    .form-control {
-      border: 1px solid #d9dee3 !important;
-      /* tom padrão do Tabler */
-      border-radius: 0.4rem !important;
-      background-color: #fff !important;
-      color: #212529;
-      box-shadow: none !important;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-    }
-
-    /* Estado de foco (azul Tabler) */
-    .form-select:focus,
-    .form-control:focus {
-      border-color: #206bc4 !important;
-      box-shadow: 0 0 0 0.15rem rgba(32, 107, 196, 0.25) !important;
-      outline: none !important;
-    }
-
-    /* Corrige o ícone do select no Chrome/Edge */
-    .form-select {
-      appearance: none;
-      -webkit-appearance: none;
-      background-position: right 0.75rem center;
-      background-repeat: no-repeat;
-      background-size: 0.75em;
-    }
-
-    /* Deixa o arquivo de upload visualmente integrado */
-    input[type="file"].form-control {
-      padding: 0.4rem 0.75rem;
-    }
-
-    /* Ajuste fino do botão Mostrar Itens */
-    .toggle-items-btn {
-      font-size: 0.875rem;
-      color: #495057;
-      border-color: #d9dee3 !important;
-    }
-
-    .toggle-items-btn:hover {
-      background-color: #f6f8fb;
-      border-color: #c5ccd3 !important;
-    }
-
-    .client-info-border {
-      border: 1px solid #d9dee3 !important;
-      border-radius: 0.4rem !important;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-
-    /* Garante que o dropdown do rodapé apareça totalmente visível */
-    .sidebar-footer {
-      position: relative;
-      overflow: visible !important;
-      z-index: 999;
-    }
-
-    /* Posiciona o menu acima do botão (abre pra cima) */
-    .sidebar-footer .dropdown-menu {
-      position: absolute !important;
-      bottom: calc(100% + 10px);
-      /* abre pra cima */
-      top: auto !important;
-      left: 0;
-      right: 0;
-      display: none;
-      background-color: var(--card-bg, #fff);
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      z-index: 9999;
-    }
-
-    .sidebar-footer .dropdown-menu.show {
-      display: block !important;
-    }
-
-    /* Efeito suave */
-    .sidebar-footer .dropdown-menu {
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.2s ease-in-out;
-    }
-
-    .sidebar-footer .dropdown-menu.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Ajuste do botão */
-    .sidebar-footer .btn {
-      cursor: pointer;
-    }
-    /* ----------  UI helpers: botões e badges usando cores do :root ---------- */
-
-/* Toggle button (Mostrar Itens) — usa a cor primária do :root */
-.toggle-items-btn {
-  color: var(--primary-color);
-  border-color: var(--primary-color) !important;
-  background-color: transparent !important;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s;
-  padding: 0.375rem 0.6rem;
-  font-size: 0.875rem;
+}
+/* MODAL VIEWPORT - FIXO NA TELA */
+.modal-viewport .modal-content {
+    height: 90vh; /* Ocupa 90% da altura da tela */
+    display: flex;
+    flex-direction: column; /* Pilha vertical */
+    border: none;
+    border-radius: 8px;
+    overflow: hidden; /* Garante que nada saia das bordas arredondadas */
 }
 
-/* Hover/active: fundo com a cor primária e texto branco (contraste) */
-.toggle-items-btn:hover,
-.toggle-items-btn:focus {
-  background-color: var(--primary-color) !important;
-  color: #fff !important;
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 6px 18px rgba(32, 107, 196, 0.12);
+/* 1. CABEÇALHO FIXO (Título + Abas na mesma linha) */
+.fiori-header-compact {
+    flex: 0 0 auto; /* Altura fixa baseada no conteúdo */
+    background-color: #fff;
+    border-bottom: 1px solid #d9d9d9;
+    padding: 0 1.5rem;
+    height: 65px; /* Altura forçada para alinhamento */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Pequeno ajuste no ícone dentro do botão */
-.toggle-items-btn i {
-  vertical-align: middle;
+/* 2. CORPO FLEXÍVEL (Onde vai o form) */
+.modal-body-scrollable {
+    flex: 1 1 auto; /* Ocupa todo o espaço que sobra */
+    overflow-y: auto; /* Scroll apenas aqui dentro se necessário */
+    padding: 1.5rem;
+    background-color: #f8f9fa;
 }
 
-/* Client info box: mantém borda azul e leve sombreamento */
-.client-info-box {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: .6rem;
-  border-left: 4px solid var(--primary-color);
-  background: #fff; /* já tem bg-light-subtle no markup, garantir branco interno */
-  box-shadow: var(--shadow-sm);
+/* 3. RODAPÉ FIXO */
+.fiori-footer {
+    flex: 0 0 auto; /* Altura fixa */
+    background-color: #fff;
+    border-top: 1px solid #d9d9d9;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between; /* Texto à esquerda, botões à direita */
+    align-items: center;
 }
 
-/* Status badges (visual consistente, usando cores Bootstrap + transparência) */
-.fw-semibold {
-  display: inline-block;
-  padding: .25rem .5rem;
-  border-radius: .4rem;
-  font-size: .85rem;
-  font-weight: 600;
+/* Estilo das Abas Compactas */
+.fiori-tabs-compact {
+    border: none;
+    height: 100%;
+    display: flex;
+    align-items: center;
 }
-
-/* approved / success */
-.fw-semibold.text-success {
-  color: #198754;                /* bootstrap success */
-  background: #1987541f;         /* 12% alpha */
+.fiori-tabs-compact .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6a6d70;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    border-radius: 0;
+    font-weight: 500;
 }
-
-/* danger / rejected */
-.fw-semibold.text-danger {
-  color: #dc3545;
-  background: #dc35451f;
+.fiori-tabs-compact .nav-link.active {
+    color: #0854a0;
+    background: transparent;
+    border-bottom-color: #0854a0;
 }
-
-/* warning / pending */
-.fw-semibold.text-warning {
-  color: #ffc107;
-  background: #ffc1071f;
-}
-
-/* default muted */
-.fw-semibold.text-muted {
-  color: #495057;
-  background: rgba(0,0,0,0.03);
-}
-
-/* garante legibilidade do texto do botão quando ícone muda */
-.btn-pill i { margin-right: .35rem; }
-
-/* items-container base (sem animação pesada) */
-.items-container {
-  display: none; /* controle via JS */
+.fiori-tabs-compact .nav-link:hover {
+    background-color: #f5f7f9;
 }

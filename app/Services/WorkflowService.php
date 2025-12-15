@@ -2,8 +2,12 @@
 namespace App\Services;
 
 use App\Models\{
-    Process, ProcessWorkflow, ProcessExecution,
-    ProcessStep, ProcessLog, ProcessNotification
+    Process,
+    ProcessWorkflow,
+    ProcessExecution,
+    ProcessStep,
+    ProcessLog,
+    ProcessNotification
 };
 use Illuminate\Support\Facades\{DB, Mail, Log, Auth};
 use Exception;
@@ -30,6 +34,7 @@ class WorkflowService
 
             // Próxima etapa
             $next = ProcessWorkflow::where('process_type_id', $process->process_type_id)
+                ->where('motivo', $process->motivo)
                 ->where('step_name', $current->next_step)
                 ->first();
 
@@ -125,7 +130,8 @@ class WorkflowService
 
             $process->update(['current_workflow_id' => $previous->id, 'status' => 'Em revisão']);
             ProcessExecution::where('process_id', $process->id)->update([
-                'current_workflow_id' => $previous->id, 'status' => 'Em revisão'
+                'current_workflow_id' => $previous->id,
+                'status' => 'Em revisão'
             ]);
 
             ProcessStep::create([
@@ -146,7 +152,8 @@ class WorkflowService
     private function notify(Process $process, ProcessWorkflow $workflow)
     {
         $notification = ProcessNotification::where('workflow_id', $workflow->id)->first();
-        if (!$notification) return;
+        if (!$notification)
+            return;
 
         try {
             $to = array_filter(explode(',', $notification->to ?? ''));
@@ -195,5 +202,6 @@ class WorkflowResult
         public bool $success,
         public string $message,
         public ?ProcessWorkflow $nextStep = null
-    ) {}
+    ) {
+    }
 }

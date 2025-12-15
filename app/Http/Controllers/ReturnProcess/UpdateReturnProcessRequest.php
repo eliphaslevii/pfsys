@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Requests\ReturnProcess;
+namespace App\Http\Controllers\ReturnProcess;
+
 
 use Illuminate\Foundation\Http\FormRequest;
 

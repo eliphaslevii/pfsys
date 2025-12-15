@@ -37,33 +37,46 @@ class SectorController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:100|unique:sectors,name',
             'description' => 'nullable|string',
+            'parent_id' => 'nullable|exists:sectors,id',
             'is_active' => 'boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+
         Sector::create($data);
 
         return response()->json(['success' => true, 'message' => 'Setor criado com sucesso!']);
     }
 
+
     public function edit(Sector $sector)
     {
-        return response()->json(['success' => true, 'sector' => $sector]);
+        $parents = Sector::where('id', '!=', $sector->id)->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'sector' => $sector,
+            'parents' => $parents
+        ]);
     }
+
 
     public function update(Request $request, Sector $sector)
     {
         $data = $request->validate([
             'name' => 'required|string|max:100|unique:sectors,name,' . $sector->id,
             'description' => 'nullable|string',
+            'parent_id' => 'nullable|exists:sectors,id',
             'is_active' => 'boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+
         $sector->update($data);
 
         return response()->json(['success' => true, 'message' => 'Setor atualizado com sucesso!']);
     }
+
 
     public function destroy(Sector $sector)
     {

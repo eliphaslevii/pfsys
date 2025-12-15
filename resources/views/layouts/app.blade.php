@@ -10,7 +10,10 @@
   <!-- Tabler -->
   <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta22/dist/css/tabler.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+  <!-- Bootstrap 5 real → necessário para dropdown funcionar -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Notyf -->
   <link href="{{ asset('notyf/notyf.min.css') }}" rel="stylesheet" />
 
@@ -30,9 +33,14 @@
   <!-- SIDEBAR -->
   <aside class="navbar navbar-vertical navbar-dark">
     <div class="container-fluid flex-column">
+
       <h1 class="navbar-brand navbar-brand-autodark mt-3 mb-3">
-        <a href="{{ route('dashboard') }}" class="text-white text-decoration-none">CoreFlow</a>
+        <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-white text-decoration-none">
+          <img src="{{ asset('images/unnamed.jpg') }}" alt="Logo" class="me-2" style="width:28px; height:28px;">
+          CoreFlow
+        </a>
       </h1>
+
 
       <ul class="navbar-nav flex-column w-100">
 
@@ -45,62 +53,92 @@
 
         {{-- GERENCIAMENTO --}}
         @if(auth()->user()?->hasPermission('coreflow.admin'))
-          <li class="nav-item has-submenu">
-            <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
-              <span><i class="ti ti-settings nav-icon"></i> Gerenciamento</span>
-              <i class="ti ti-chevron-down submenu-chevron"></i>
-            </button>
-            <ul class="navbar-nav flex-column ms-3 submenu">
-              @can('coreflow.admin')
-                <li class="nav-item">
-                  <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
-                    href="{{ route('admin.users') }}">
-                    <i class="ti ti-users nav-icon"></i> Usuários
-                  </a>
-                </li>
-              @endcan
+        <li class="nav-item has-submenu">
+          <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
+            <span><i class="ti ti-settings nav-icon"></i> Gerenciamento</span>
+            <i class="ti ti-chevron-down submenu-chevron"></i>
+          </button>
+          <ul class="navbar-nav flex-column ms-3 submenu">
+            @can('coreflow.admin')
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
+                href="{{ route('admin.users') }}">
+                <i class="ti ti-users nav-icon"></i> Usuários
+              </a>
+            </li>
+            @endcan
 
-              @can('coreflow.admin')
-                <li class="nav-item">
-                  <a class="nav-link {{ request()->routeIs('admin.sectors.index') ? 'active' : '' }}"
-                    href="{{ route('admin.sectors.index') }}">
-                    <i class="ti ti-building nav-icon"></i> Setores e Níveis
-                  </a>
-                </li>
-              @endcan
-            </ul>
-          </li>
+            @can('coreflow.admin')
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('admin.sectors.index') ? 'active' : '' }}"
+                href="{{ route('admin.sectors.index') }}">
+                <i class="ti ti-building nav-icon"></i> Setores e Níveis
+              </a>
+            </li>
+            @endcan
+          </ul>
+        </li>
         @endif
 
         {{-- RELATÓRIOS (Exemplo extra, se quiser expandir depois) --}}
-@if(auth()->user()?->hasPermission('return.process'))
-  <li class="nav-item has-submenu">
-    <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
-      <span><i class="ti ti-receipt-refund nav-icon"></i>Devolução</span>
-      <i class="ti ti-chevron-down submenu-chevron"></i>
-    </button>
-    
-    <ul class="navbar-nav flex-column ms-3 submenu">
-      
-      <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
-           href="{{ route('return.process.index') }}">
-          <i class="ti ti-list-details nav-icon"></i> Devoluções
-        </a>
-      </li>
-      
-      @if(auth()->user()?->hasPermission('coreflow.admin'))
-        <li class="nav-item">
-          <a class="nav-link {{ request()->routeIs('workflows.index') ? 'active' : '' }}"
-             href="{{ route('workflows.index') }}">
-            <i class="ti ti-settings-automation nav-icon"></i> Gerenciar Fluxo
-          </a>
-        </li>
-      @endif
+        @if(auth()->user()?->hasPermission('process.view'))
+        <li class="nav-item has-submenu">
+          <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
+            <span><i class="ti ti-receipt-refund nav-icon"></i>Devolução</span>
+            <i class="ti ti-chevron-down submenu-chevron"></i>
+          </button>
 
-    </ul>
-  </li>
-@endif
+          <ul class="navbar-nav flex-column ms-3 submenu">
+
+            {{-- TODOS QUE TEM process.view VEEM ISSO --}}
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
+                href="{{ route('return.process.index') }}">
+                <i class="ti ti-list-details nav-icon"></i> Devoluções
+              </a>
+            </li>
+
+            {{-- APENAS GERÊNCIA COMERCIAL E SUPER ADMIN --}}
+            @if(auth()->user()?->hasPermission('process.manage_config'))
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('workflows.index') ? 'active' : '' }}"
+                href="{{ route('workflows.index') }}">
+                <i class="ti ti-settings-automation nav-icon"></i> Gerenciar Fluxo
+              </a>
+            </li>
+            @endif
+
+          </ul>
+        </li>
+        @endif
+        {{-- Logística (Transportadoras) --}}
+        @if(auth()->user()?->hasPermission('process.view'))
+        <li class="nav-item has-submenu">
+          <button class="nav-link d-flex justify-content-between align-items-center submenu-toggle" type="button">
+            <span><i class="ti ti-package-export nav-icon"></i>Logística</span>
+            <i class="ti ti-chevron-down submenu-chevron"></i>
+          </button>
+
+          <ul class="navbar-nav flex-column ms-3 submenu">
+
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('transpNfes.index') ? 'active' : '' }}"
+                href="{{ route('transpNfes.index') }}">
+                <i class="ti ti-tir nav-icon"></i> Transportes
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {{ request()->routeIs('logistica.agendamentos.index') ? 'active' : '' }}"
+                href="{{ route('logistica.agendamentos.index') }}">
+                <i class="ti ti-calendar nav-icon"></i> Agendamentos
+              </a>
+            </li>
+
+          </ul>
+
+        </li>
+        @endif
 
       </ul>
       <!-- Rodapé -->
@@ -179,13 +217,39 @@
       </div>
     </div>
   </div>
+  <!-- Modal Genérico de Confirmação -->
+  <!-- Modal Global de Confirmação -->
+  <div class="modal fade" id="modal-confirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalConfirmTitle">Confirmação</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body text-center" id="modalConfirmMessage">
+          Tem certeza?
+        </div>
+
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="modalConfirmYes" class="btn btn-primary">
+            Confirmar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta22/dist/js/tabler.min.js"></script>
   <script src="{{ asset('notyf/notyf.min.js') }}"></script>
 
-  @stack('scripts')
 
+  @stack('scripts')
 </body>
 
 </html>

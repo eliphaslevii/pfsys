@@ -9,12 +9,13 @@ class ProcessStep extends Model
 {
     use HasFactory;
 
+    protected $table = 'process_steps';
+
     protected $fillable = [
         'process_id',
-        'workflow_id',
+        'workflow_step_id',
         'user_id',
         'status',
-        'action',
         'comments',
         'is_current',
         'completed_at',
@@ -25,19 +26,27 @@ class ProcessStep extends Model
         'completed_at' => 'datetime',
     ];
 
-    // 🔗 Relações
+    // 🔗 Step pertence ao processo
     public function process()
     {
         return $this->belongsTo(Process::class);
     }
 
-    public function workflow()
+    // 🔗 Step pertence ao workflow_step
+    public function workflowStep()
     {
-        return $this->belongsTo(ProcessWorkflow::class);
+        return $this->belongsTo(WorkflowStep::class);
     }
 
+    // 🔗 Usuário que executou
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // 🔥 Escopo do step atual
+    public function scopeCurrent($query)
+    {
+        return $query->where('is_current', true);
     }
 }

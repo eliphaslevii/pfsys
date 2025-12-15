@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('📦 return-process-index.js carregado');
+document.querySelectorAll('.btn-approve').forEach(btn => {
+    btn.addEventListener('click', () => approveProcess(btn.dataset.id));
+});
 
   const tableBody = document.querySelector('#processTableBody');
   const btnRefresh = document.querySelector('#btnRefresh');
@@ -27,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <td colspan="9" class="text-center text-muted py-3">
               Nenhum processo encontrado.
             </td>
-          </tr>`;
+          </tr>
+          `;
         return;
       }
 
@@ -54,6 +58,12 @@ ${can('process.delete')
           ? `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${p.id}">
        <i class="ti ti-trash"></i>
      </button>`
+          : ''
+        }
+${can('process.approve')
+          ? `<button class="btn btn-sm btn-approve" data-id="${p.id}">
+      <i class="ti ti-arrow-right"></i>
+    </button>`
           : ''
         }
 
@@ -93,33 +103,33 @@ ${can('process.delete')
     if (s.includes('aberto') || s.includes('pendente')) return 'text-warning';
     return 'text-muted';
   }
-async function openProcessModal(id) {
-  console.log(`🔍 Abrindo processo #${id}`);
+  async function openProcessModal(id) {
+    console.log(`🔍 Abrindo processo #${id}`);
 
-  const modalEl = document.getElementById('modal-process-view');
-  const modal = new bootstrap.Modal(modalEl);
-  const body = document.getElementById('modalProcessBody');
-  const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+    const modalEl = document.getElementById('modal-process-view');
+    const modal = new bootstrap.Modal(modalEl);
+    const body = document.getElementById('modalProcessBody');
+    const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
 
-  body.innerHTML = `
+    body.innerHTML = `
     <div class="text-center py-5 text-muted">
       <div class="spinner-border text-primary mb-3"></div><br>
       Carregando processo #${id}...
     </div>`;
-  modal.show();
+    modal.show();
 
-  try {
-    const res = await fetch(`/return-process/${id}`, { headers: { 'Accept': 'application/json' } });
-    const json = await res.json();
+    try {
+      const res = await fetch(`/return-process/${id}`, { headers: { 'Accept': 'application/json' } });
+      const json = await res.json();
 
-    console.log('🧾 Resposta da API:', json);
-    if (!res.ok || !json.success) throw new Error(json.message || `Erro ao buscar processo (#${res.status})`);
+      console.log('🧾 Resposta da API:', json);
+      if (!res.ok || !json.success) throw new Error(json.message || `Erro ao buscar processo (#${res.status})`);
 
-    const data = json.data || {};
-    const itens = Array.isArray(data.items) ? data.items : [];
+      const data = json.data || {};
+      const itens = Array.isArray(data.items) ? data.items : [];
 
-    // 🧩 Monta o corpo do modal
-    body.innerHTML = `
+      // 🧩 Monta o corpo do modal
+      body.innerHTML = `
       <div class="container-fluid">
       <div id="client-info-box_{{ $context }}" class="mt-4 p-3 rounded-3 border-start border-4 border-primary bg-light-subtle shadow-sm">
 
@@ -186,7 +196,7 @@ async function openProcessModal(id) {
             </thead>
             <tbody>
               ${itens.length
-                ? itens.map(i => `
+          ? itens.map(i => `
                     <tr>
                       <td>${i.artigo ?? '—'}</td>
                       <td>${i.descricao ?? '—'}</td>
@@ -197,39 +207,39 @@ async function openProcessModal(id) {
                       <td>R$ ${parseFloat(i.preco_unitario ?? 0).toFixed(2).replace('.', ',')}</td>
                     </tr>
                   `).join('')
-                : `<tr><td colspan="7" class="text-center text-muted">Nenhum item encontrado.</td></tr>`
-              }
+          : `<tr><td colspan="7" class="text-center text-muted">Nenhum item encontrado.</td></tr>`
+        }
             </tbody>
           </table>
         </div>
       </div>
     `;
 
-    // ✨ Listener interno do modal (evita duplicar handlers globais)
-    const toggleBtn = body.querySelector('.toggle-items-btn');
-    const itemsContainer = body.querySelector('.items-container');
+      // ✨ Listener interno do modal (evita duplicar handlers globais)
+      const toggleBtn = body.querySelector('.toggle-items-btn');
+      const itemsContainer = body.querySelector('.items-container');
 
-    if (toggleBtn && itemsContainer) {
-      toggleBtn.addEventListener('click', () => {
-        const isHidden = itemsContainer.style.display === 'none' || !itemsContainer.style.display;
-        itemsContainer.style.display = isHidden ? 'block' : 'none';
-        toggleBtn.innerHTML = `
+      if (toggleBtn && itemsContainer) {
+        toggleBtn.addEventListener('click', () => {
+          const isHidden = itemsContainer.style.display === 'none' || !itemsContainer.style.display;
+          itemsContainer.style.display = isHidden ? 'block' : 'none';
+          toggleBtn.innerHTML = `
           <i class="ti ${isHidden ? 'ti-chevron-up' : 'ti-chevron-down'} me-1"></i>
           ${isHidden ? 'Ocultar Itens' : 'Mostrar Itens'}
         `;
-      });
-    }
+        });
+      }
 
-  } catch (err) {
-    console.error('❌ Erro ao abrir processo:', err);
-    body.innerHTML = `
+    } catch (err) {
+      console.error('❌ Erro ao abrir processo:', err);
+      body.innerHTML = `
       <div class="alert alert-danger text-center">
         Erro ao carregar detalhes do processo.<br>
         ${err.message}
       </div>`;
-    notyf.error(err.message || 'Falha ao abrir processo.');
+      notyf.error(err.message || 'Falha ao abrir processo.');
+    }
   }
-}
 
 
   async function deleteProcess(id) {
@@ -273,4 +283,31 @@ if (toggleBtn && itemsContainer) {
       ${isVisible ? 'Mostrar Itens' : 'Ocultar Itens'}
     `;
   });
+}
+
+async function approveProcess(id) {
+    if (!confirm('Deseja iniciar este processo?')) return;
+
+    try {
+        const res = await fetch(`/return-process/${id}/approve`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+
+        const json = await res.json();
+
+        if (json.success) {
+            notyf.success(json.message);
+            loadProcesses(); // recarregar tabela
+        } else {
+            notyf.error(json.message || 'Erro ao aprovar processo.');
+        }
+
+    } catch (err) {
+        console.error(err);
+        notyf.error('Erro ao se comunicar com o servidor.');
+    }
 }

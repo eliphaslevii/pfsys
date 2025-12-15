@@ -1,0 +1,9 @@
+○ laravel-queue.service - Laravel Queue Worker for Bsys
+     Loaded: loaded (]8;;file://CoreFlow/etc/systemd/system/laravel-queue.service/etc/systemd/system/laravel-queue.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+    Drop-In: /etc/systemd/system/laravel-queue.service.d
+             └─]8;;file://CoreFlow/etc/systemd/system/laravel-queue.service.d/override.confoverride.conf]8;;
+     Active: inactive (dead) since Wed 2025-12-10 09:21:57 -03; 13s ago
+   Duration: 25.665s
+    Process: 4813 ExecStart=/usr/bin/php /var/www/bsys_dev/artisan queue:work --queue=transport_slow_queue,default --sleep=1 --backoff=5 --timeout=120 --max-time=3600 (code=exited, status=0/SUCCESS)
+   Main PID: 4813 (code=exited, status=0/SUCCESS)
+        CPU: 527ms

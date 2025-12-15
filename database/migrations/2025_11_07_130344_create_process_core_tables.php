@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->foreignId('required_level_id')->nullable()->constrained('levels')->onDelete('set null');
             $table->string('next_step')->nullable();
             $table->boolean('auto_notify')->default(true);
+            $table->string('motivo')->nullable();
             $table->timestamps();
         });
 
@@ -40,7 +41,8 @@ return new class extends Migration {
             $table->string('status', 50)->default('Aberto');
             $table->string('cliente_nome')->nullable();
             $table->string('cliente_cnpj', 20)->nullable();
-
+                        $table->string('motivo')->nullable();
+                        $table->string('codigo_erro', 100)->nullable();
             // Campos fiscais e de controle
             $table->string('nf_saida', 50)->nullable();
             $table->string('nf_devolucao', 50)->nullable();
@@ -51,7 +53,7 @@ return new class extends Migration {
             $table->string('doc_faturamento', 50)->nullable();
             $table->string('ordem_entrada', 50)->nullable();
             $table->string('migo', 50)->nullable();
-
+            
             $table->boolean('movimentacao_mercadoria')->default(false);
             $table->text('observacoes')->nullable();
 
@@ -100,22 +102,6 @@ return new class extends Migration {
         });
 
         /**
-         * 7️⃣ Controle real do processo (andamento / steps executados)
-         */
-        Schema::create('process_steps', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('process_id')->constrained('processes')->onDelete('cascade');
-            $table->foreignId('workflow_id')->nullable()->constrained('process_workflows')->onDelete('set null');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('status', 50)->default('Pendente'); // Pendente, Aprovado, Rejeitado, Em análise
-            $table->string('action', 100)->nullable(); // Ex: "Aprovação", "Correção", etc.
-            $table->text('comments')->nullable();
-            $table->boolean('is_current')->default(false);
-            $table->timestamp('completed_at')->nullable();
-            $table->timestamps();
-        });
-
-        /**
          * 8️⃣ Regras especiais do processo (validações ou fluxos condicionais)
          */
         Schema::create('process_rules', function (Blueprint $table) {
@@ -144,6 +130,7 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+
     }
 
     public function down(): void

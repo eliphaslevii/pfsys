@@ -1,10 +1,13 @@
 <?php
 
 namespace App\Providers;
+
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use Illuminate\Support\ServiceProvider;
 use App\Policies\UserPolicy;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,6 +52,14 @@ class AppServiceProvider extends ServiceProvider
             // Permite somente a partir de nível 90 (Super Admin)
             return $user->level?->authority_level >= 90;
         });
-    }
 
+        // RateLimit Transportadoras
+        RateLimiter::for('sao-miguel', function ($job) {
+            return Limit::perMinute(10)->by('sao-miguel-global');
+        });
+
+        RateLimiter::for('alfa', function ($job) {
+            return Limit::perMinute(15)->by('alfa-global');
+        });
+    }
 }

@@ -15,6 +15,7 @@ class ProcessWorkflow extends Model
         'step_name',
         'required_level_id',
         'next_step',
+        'motivo',
         'auto_notify',
     ];
 

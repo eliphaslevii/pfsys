@@ -10,84 +10,28 @@ document.addEventListener('DOMContentLoaded', () => {
   /* =====================================================
  * 4️⃣ Botão "Mostrar mais / menos"
  * ===================================================== */
-document.querySelectorAll('.toggle-items-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetSelector = btn.getAttribute('data-target');
-    const target = btn.closest('div').parentElement.querySelector(targetSelector);
-    const icon = btn.querySelector('i');
-    if (!target) return console.warn('⚠️ Container de itens não encontrado:', targetSelector);
+  document.querySelectorAll('.toggle-items-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetSelector = btn.getAttribute('data-target');
+      const target = btn.closest('div').parentElement.querySelector(targetSelector);
+      const icon = btn.querySelector('i');
+      if (!target) return console.warn('⚠️ Container de itens não encontrado:', targetSelector);
 
-    const isHidden = target.style.display === 'none' || !target.style.display;
+      const isHidden = target.style.display === 'none' || !target.style.display;
 
-    // Alterna visibilidade
-    target.style.display = isHidden ? 'block' : 'none';
+      // Alterna visibilidade
+      target.style.display = isHidden ? 'block' : 'none';
 
-    // Troca texto e ícone
-    btn.innerHTML = `
+      // Troca texto e ícone
+      btn.innerHTML = `
       <i class="ti ${isHidden ? 'ti-chevron-up' : 'ti-chevron-down'} me-1"></i>
       ${isHidden ? 'Ocultar Itens' : 'Mostrar Itens'}
     `;
+    });
   });
-});
 
   const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
   const csrf = document.querySelector('meta[name="csrf-token"]').content;
-
-  /* =====================================================
-   * 1️⃣ Popular selects de motivos e códigos
-   * ===================================================== */
-  const motivosBase = {
-    grupos: [
-      { label: "Notas Fiscais e Reentregas", valores: ["Emissão de nova nota fiscal + reentrega", "Somente Emissão de nova nota fiscal", "Somente ajuste de estoque", "Baixa financeira"] },
-      { label: "Condições Especiais (Retorno para PFERD)", valores: ["Retorno do material para a PFERD", "Retorno de material para PFERD + Envio de nova remessa", "Retorno de Material para a PFERD + Transporte CLIENTE", "Retorno de Material para a PFERD + Transporte PFERD"] },
-      { label: "Sucateamento / Descarte", valores: ["Material Descartado", "Devolução + sucateamento"] }
-    ]
-  };
-
-  const codigosErroBase = {
-    grupos: [
-      { label: "Erros Comerciais", valores: ["Acordo comercial", "Negociação comercial", "Pedido programado", "Preço errado", "Preço negociado não informado", "Faturamento sem autorização", "Comprou errado", "Recusa indevida", "Outros"] },
-      { label: "Erros Fiscais e Tributários", valores: ["Alteração ICMS (FCI)", "Redução IPI", "Imposto incorreto", "CNPJ incorreto"] },
-      { label: "Erros Logísticos e de Transporte", valores: ["Embarque não autorizado", "Erro no transporte", "Cobrança de frete", "Frete incorreto", "Extravio mercadoria (transportadora)", "Sem corte no físico"] },
-      { label: "Erros de Produto / Quantidade", valores: ["Produto errado", "Produto com defeito", "Produto divergente (físico)", "Quantidade divergente (físico)", "Quantidade errada", "Substituição de item", "Conserto", "Retorno demonstração", "Utilização incorreta (consumo / industrialização)"] },
-      { label: "Erros de Embalagem / Sistema / Avaria", valores: ["Avaria material (embalagem ou produto)", "Erro embalagem (pallet/etiqueta)", "Erro sistêmico", "Erro de digitação", "Duplicidade"] }
-    ]
-  };
-
-  function popularSelects(context) {
-    const motivoSelect = document.getElementById(`motivo_${context}`);
-    const codigoSelect = document.getElementById(`codigo_erro_${context}`);
-    if (!motivoSelect || !codigoSelect) return;
-
-    motivoSelect.innerHTML = '<option value="">Selecione...</option>';
-    motivosBase.grupos.forEach(g => {
-      const group = document.createElement('optgroup');
-      group.label = g.label;
-      g.valores.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v;
-        opt.textContent = v;
-        group.appendChild(opt);
-      });
-      motivoSelect.appendChild(group);
-    });
-
-    codigoSelect.innerHTML = '<option value="">Selecione...</option>';
-    codigosErroBase.grupos.forEach(g => {
-      const group = document.createElement('optgroup');
-      group.label = g.label;
-      g.valores.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v;
-        opt.textContent = v;
-        group.appendChild(opt);
-      });
-      codigoSelect.appendChild(group);
-    });
-  }
-
-  ['recusa', 'devolucao'].forEach(ctx => popularSelects(ctx));
-
   /* =====================================================
    * 2️⃣ Processar XML
    * ===================================================== */
@@ -221,12 +165,21 @@ document.querySelectorAll('.toggle-items-btn').forEach(btn => {
       formData.append('gestorSolicitante', gestor);
 
       // XML extraído
+      // XML extraído — valida conforme tipo
       if (window._xmlData) {
-        formData.append('recusa_sefaz', window._xmlData.recusa_sefaz || '');
-        formData.append('nf_saida', window._xmlData.nf_saida || '');
-        formData.append('nf_devolucao', window._xmlData.nf_devolucao || '');
-        formData.append('nfo', window._xmlData.nfo || '');
-        formData.append('protocolo', window._xmlData.protocolo || '');
+
+        if (context === "recusa") {
+          formData.append('nf_saida', window._xmlData.nf_saida || '');
+          formData.append('recusa_sefaz', window._xmlData.recusa_sefaz || '');
+          formData.append('protocolo', window._xmlData.protocolo || '');
+          // NÃO ENVIAR: nf_devolucao / nfo
+        }
+
+        if (context === "devolucao") {
+          formData.append('nf_devolucao', window._xmlData.nf_devolucao || '');
+          formData.append('nfo', window._xmlData.nfo || '');
+          // NÃO ENVIAR: nf_saida / recusa_sefaz
+        }
       }
 
       // XML file

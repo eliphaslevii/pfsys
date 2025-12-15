@@ -93,6 +93,10 @@ class User extends Authenticatable
     {
         return $this->hasPermission($permission);
     }
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'level_permission', 'level_id', 'permission_id');
+    }
 
 
 }

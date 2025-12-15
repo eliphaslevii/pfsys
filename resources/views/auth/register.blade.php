@@ -96,7 +96,7 @@
                                         data-edit-url="{{ route('admin.users.edit', $user) }}" data-modal="#editUserModal">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-delete"
+                                    <button class="btn btn-sm btn-outline-danger btn-delete-user"
                                         data-url="{{ route('admin.users.destroy', $user) }}">
                                         <i class="ti ti-trash"></i>
                                     </button>
@@ -199,9 +199,10 @@
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form method="POST" id="editUserForm">
+                <form id="editUserForm" method="POST">
                     @csrf
                     @method('PATCH')
+
                     <div class="modal-header">
                         <h5 class="modal-title">Editar Usuário</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -248,5 +249,8 @@
             </div>
         </div>
     </div>
-
+  @vite([
+    'resources/js/modules/users/users-create.js',
+    'resources/js/modules/users/users-edit.js'
+])
 @endsection

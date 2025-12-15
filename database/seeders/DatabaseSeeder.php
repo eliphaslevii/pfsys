@@ -6,22 +6,18 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         // 1️⃣ Estruturas base
         $this->call([
-            SectorSeeder::class,
-            PermissionSeeder::class,
-            LevelSeeder::class,
+            SectorSeeder::class,        // setores primeiro
+            LevelSeeder::class,         // níveis dependem de setores
+            PermissionSeeder::class,    // permissões são atribuídas aos níveis
         ]);
 
         // 2️⃣ Usuários padrão
         $this->call([
-            UserSeeder::class,
-            TestUsersSeeder::class, // opcional — remova se não existir
+            TestUsersSeeder::class,     // cria usuários com levels definidos acima
         ]);
 
         // 3️⃣ Processos e workflows

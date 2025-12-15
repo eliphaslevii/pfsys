@@ -14,6 +14,7 @@ class ReturnProcess extends Model
         'status',
         'cliente_nome',
         'cliente_cnpj',
+        'codigoErro',
         'nf_saida',
         'nf_devolucao',
         'recusa_sefaz',
