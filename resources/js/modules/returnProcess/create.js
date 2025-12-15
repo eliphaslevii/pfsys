@@ -89,11 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = "";
 
         if (!itens.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Nenhum item encontrado.</td></tr>';
+          tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center text-muted">
+        Nenhum item encontrado.
+      </td>
+    </tr>`;
           return;
         }
 
         const parsedItens = [];
+        let rowsHtml = "";
+
         for (let item of itens) {
           const prod = item.getElementsByTagNameNS(ns, "prod")[0];
           if (!prod) continue;
@@ -104,9 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
           const qtd = parseFloat(prod.getElementsByTagNameNS(ns, "qCom")[0]?.textContent || 0).toFixed(2);
           const preco = parseFloat(prod.getElementsByTagNameNS(ns, "vUnCom")[0]?.textContent || 0).toFixed(2);
 
-          parsedItens.push({ artigo, descricao, ncm, nf_saida: nfSaida, nf_devolucao: nfDevolucao, quantidade: qtd, preco_unitario: preco });
+          parsedItens.push({
+            artigo,
+            descricao,
+            ncm,
+            nf_saida: nfSaida,
+            nf_devolucao: nfDevolucao,
+            quantidade: qtd,
+            preco_unitario: preco
+          });
 
-          tbody.innerHTML += `
+          rowsHtml += `
             <tr>
               <td>${artigo}</td>
               <td>${descricao}</td>
@@ -115,8 +130,31 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>${nfDevolucao}</td>
               <td>${qtd}</td>
               <td>R$ ${preco.replace('.', ',')}</td>
-            </tr>`;
+            </tr>
+          `;
         }
+
+        // 👉 injeta UMA vez só
+        tbody.innerHTML = rowsHtml;
+        // 👉 injeta UMA vez só
+        tbody.innerHTML = rowsHtml;
+
+        // Guarda tudo
+        window._xmlData = {
+          context,
+          nomeCliente,
+          cnpjCliente,
+          nf_saida: nfSaida,
+          nf_devolucao: nfDevolucao,
+          nfo,
+          protocolo,
+          recusa_sefaz: recusaSefaz,
+          inf_cpl: infCpl,
+          itens: parsedItens
+        };
+
+        notyf.success("XML importado com sucesso!");
+
 
         // Guarda tudo
         window._xmlData = { context, nomeCliente, cnpjCliente, nf_saida: nfSaida, nf_devolucao: nfDevolucao, nfo, protocolo, recusa_sefaz: recusaSefaz, inf_cpl: infCpl, itens: parsedItens };

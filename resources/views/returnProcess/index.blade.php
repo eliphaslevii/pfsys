@@ -56,10 +56,3 @@
 
   @include('returnProcess.partials.modals')
 @endsection
-@push('scripts')
-  {{-- 🔹 1. Define as permissões globais antes de carregar os JS --}}
-  <script>
-    window.userPermissions = @json(auth()->user()->level?->permissions->pluck('name') ?? []);
-    console.log('🔐 Permissões carregadas:', window.userPermissions);
-  </script>
-@endpush

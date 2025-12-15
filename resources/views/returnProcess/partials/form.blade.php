@@ -1,15 +1,9 @@
 <div class="row justify-content-center">
     <div class="col-12 col-xl-12"> {{-- Largura controlada para leitura --}}
 
-        <div class="card fiori-card">
+        <div class="card ">
             
-            {{-- 1. OBJECT HEADER (Contexto) --}}
-            <div class="fiori-header">
-                <div class="d-flex justify-content-between align-items-start">
-                    
-                   
-                </div>
-            </div>
+       
 
             {{-- 2. ICON TAB BAR (Navegação) --}}
             <ul class="nav nav-tabs fiori-tabs" id="returnProcessTabs" role="tablist">
