@@ -10,12 +10,6 @@ export default defineConfig({
         'resources/js/app.js',
 
         // 🔹 Entrypoints modulares (um por tela ou módulo)
-        'resources/js/modules/returnProcess/create.js',
-        'resources/js/modules/returnProcess/index.js',
-        'resources/js/modules/returnProcess/steps.js',
-        'resources/js/modules/returnProcess/return-process-flow.js',
-        'resources/js/modules/returnProcess/return-process-utils.js',
-        'resources/js/modules/returnProcess/return-process-ui.js',
         'resources/js/modules/users/users-create.js',
         'resources/js/modules/users/users-edit.js',
         "resources/js/modules/sectors/delete.js",
@@ -28,7 +22,10 @@ export default defineConfig({
         "resources/js/modules/workflowTemplate/edit.js",
         "resources/js/modules/workflowTemplate/create.js",
         "resources/js/modules/steps/form.js",
-
+        "resources/js/comercial/xml-details.js",
+        "resources/js/comercial/recusa-create.js",
+        "resources/js/comercial/devolucao-create.js",
+        "resources/js/comercial/process-table.js",
       ],
       refresh: true,
     }),

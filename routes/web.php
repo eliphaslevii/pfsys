@@ -15,6 +15,9 @@ use App\Services\Transportadoras\SaoMiguelService;
 use App\Http\Controllers\Logistic\EntregaController;
 use App\Http\Controllers\Logistic\AgendamentoLogisticaController;
 use App\Http\Controllers\Nfe\NfeEspelhoController;
+use App\Http\Controllers\Comercial\RecusaController;
+use App\Http\Controllers\Comercial\DevolucaoController;
+use App\Http\Controllers\Comercial\ProcessosController;
 // =====================================================
 // 🔐 Página inicial → Login
 // =====================================================
@@ -81,63 +84,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 // =====================================================
 // 📦 PROCESSOS DE DEVOLUÇÃO / RECUSA (CRUD e VIEWS)
 // =====================================================
-Route::prefix('return-process')
-    ->name('return.process.')
-    ->middleware(['auth'])
-    ->group(function () {
-
-        // 🔹 Listar / Ver
-        Route::get('/', [ReturnProcessController::class, 'index'])
-            ->middleware('haspermission:return.process')
-            ->name('index');
-
-        Route::get('/data', [ReturnProcessController::class, 'data'])
-            ->middleware('haspermission:return.process')
-            ->name('data');
-
-        Route::get('/{id}', [ReturnProcessController::class, 'show'])
-            ->middleware('haspermission:return.process')
-            ->name('show');
-
-        // 🔹 Criar processo
-        Route::get('/create', [ReturnProcessController::class, 'create'])
-            ->middleware('haspermission:return.process')
-            ->name('create');
-
-        Route::post('/', [ReturnProcessController::class, 'store'])
-            ->middleware('haspermission:return.process')
-            ->name('store');
-
-        // 🔹 Excluir processo
-        Route::delete('/{id}', [ReturnProcessController::class, 'destroy'])
-            ->middleware('haspermission:process.delete')
-            ->name('destroy');
-    });
-
-
-// =====================================================
-// 🔄 FLUXO — ETAPAS / AVANÇO / TIMELINE / FINALIZAÇÃO
-// =====================================================
-Route::prefix('return-process-flow')
-    ->name('return.flow.')
-    ->middleware(['auth'])
-    ->group(function () {
-
-        // Avançar etapa
-        Route::post('/{id}/advance', [ReturnProcessFlowController::class, 'advance'])
-            ->middleware('haspermission:return.process')
-            ->name('advance');
-
-        // Finalizar processo
-        Route::post('/{id}/finalize', [ReturnProcessFlowController::class, 'finalize'])
-            ->middleware('haspermission:return.process')
-            ->name('finalize');
-
-        // Timeline
-        Route::get('/{id}/timeline', [ReturnProcessFlowController::class, 'timeline'])
-            ->middleware('haspermission:return.process')
-            ->name('timeline');
-    });
 
 
 // =====================================================
@@ -193,6 +139,69 @@ Route::prefix('logistica/agendamentos')->group(function () {
     Route::post('/', [AgendamentoLogisticaController::class, 'store'])
         ->name('logistica.agendamentos.store');
 });
+
+Route::prefix('comercial')
+    ->middleware('auth')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | DASHBOARD (LEGADO)
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/processes', [ReturnProcessController::class, 'index'])
+            ->name('return.process.index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PROCESSOS (LISTAGEM + WORKFLOW)
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('processes')->group(function () {
+
+            // 📋 View principal
+            Route::get('/list', [ProcessosController::class, 'index'])
+                ->name('processes.index');
+
+            // 📊 Dados da tabela (AJAX)
+            Route::get('/data', [ProcessosController::class, 'data'])
+                ->name('processes.data');
+
+            // 🔍 Detalhes (modal)
+            Route::get('/{process}/detalhes', [ProcessosController::class, 'detalhes'])
+                ->name('processes.detalhes');
+
+            // ✅ Aprovar processo (iniciar fluxo)
+            Route::post('/{process}/approve', [ProcessosController::class, 'approve'])
+                ->name('processes.approve');
+
+            // 🗑️ Excluir processo
+            Route::delete('/{process}', [ProcessosController::class, 'destroy'])
+                ->name('processes.destroy');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECUSA
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/recusa/create', [RecusaController::class, 'create'])
+            ->name('recusa.create');
+
+        Route::post('/recusa', [RecusaController::class, 'store'])
+            ->name('recusa.store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEVOLUÇÃO
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/devolucao/create', [DevolucaoController::class, 'create'])
+            ->name('devolucao.create');
+
+        Route::post('/devolucao', [DevolucaoController::class, 'store'])
+            ->name('devolucao.store');
+    });
 
 /*
 |--------------------------------------------------------------------------

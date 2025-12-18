@@ -64,28 +64,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Sector::class);
     }
-
+    public function canApproveProcess(): bool
+    {
+        return $this->hasPermission('process.approve');
+    }
     public function hasPermission(string $permission): bool
     {
-        // 🔹 Libera todos os usuários de nível "Super" ou "Admin"
+        // Super Admin / Admin geral
         if ($this->level && preg_match('/super|admin/i', $this->level->name)) {
             return true;
         }
 
-        // 🔹 Caso o usuário tenha permissões diretas (se você adicionar futuramente)
-        if (method_exists($this, 'permissions') && $this->permissions->contains('name', $permission)) {
-            return true;
-        }
-
-        // 🔹 Caso o nível associado tenha permissões
-        if ($this->level && method_exists($this->level, 'permissions') && $this->level->permissions->contains('name', $permission)) {
-            return true;
-        }
-
-        // 🔹 Caso contrário, sem permissão
-        return false;
+        // Permissões herdadas do nível
+        return $this->level
+            ?->permissions
+            ?->contains('name', $permission) ?? false;
     }
-
     /**
      * Compatibilidade com o Blade (@can) e padrões do Spatie.
      */
@@ -93,10 +87,4 @@ class User extends Authenticatable
     {
         return $this->hasPermission($permission);
     }
-    public function permissions()
-    {
-        return $this->belongsToMany(Permission::class, 'level_permission', 'level_id', 'permission_id');
-    }
-
-
 }

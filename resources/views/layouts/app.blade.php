@@ -11,7 +11,6 @@
   <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta22/dist/css/tabler.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
   <!-- Bootstrap 5 real → necessário para dropdown funcionar -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Notyf -->
@@ -92,8 +91,8 @@
 
             {{-- TODOS QUE TEM process.view VEEM ISSO --}}
             <li class="nav-item">
-              <a class="nav-link {{ request()->routeIs('return.process.index') ? 'active' : '' }}"
-                href="{{ route('return.process.index') }}">
+              <a class="nav-link {{ request()->routeIs('processes.index') ? 'active' : '' }}"
+                href="{{ route('processes.index') }}">
                 <i class="ti ti-list-details nav-icon"></i> Devoluções
               </a>
             </li>

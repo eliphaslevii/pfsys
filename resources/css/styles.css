@@ -572,3 +572,102 @@ input[type="file"].form-control {
 .fiori-tabs-compact .nav-link:hover {
     background-color: #f5f7f9;
 }
+    #processTable th,
+    #processTable td {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Só NÃO quebram linha */
+    #processTable td:nth-child(1),
+    /* Tipo */
+    #processTable td:nth-child(5),
+    /* Código erro */
+    #processTable td:nth-child(6),
+    /* Etapa */
+    #processTable td:nth-child(8),
+    /* Data */
+    #processTable td:nth-child(9) {
+        /* Ações */
+        white-space: nowrap;
+    }
+
+    /* Podem quebrar linha */
+    #processTable td:nth-child(2),
+    /* Cliente */
+    #processTable td:nth-child(4)
+
+    /* Motivo */
+        {
+        white-space: normal;
+        max-width: 260px;
+    }
+
+    /* Container da Paginação (Rodapé da Tabela) */
+    #pagination {
+        background-color: #fff;
+        border-top: 1px solid #e6e8eb;
+        /* Divisão sutil com a tabela */
+        padding: 1rem 1.25rem;
+        /* Mesma margem lateral do cabeçalho da tabela */
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
+
+    /* Lista de Botões */
+    .pagination-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 0.25rem;
+        /* Espacinho entre botões */
+    }
+
+    /* Botão Individual */
+    .page-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        border: 1px solid #dce1e7;
+        background-color: #fff;
+        color: #5d6876;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Hover */
+    .page-btn:hover:not(.active):not(:disabled) {
+        background-color: #f0f2f5;
+        color: var(--primary-color);
+        border-color: #c6cdd5;
+    }
+
+    /* Ativo */
+    .page-btn.active {
+        background-color: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+        cursor: default;
+    }
+
+    /* Desabilitado (...) ou Setas no fim */
+    .page-btn:disabled,
+    .page-btn.disabled {
+        background-color: transparent;
+        border-color: transparent;
+        color: #adb5bd;
+        cursor: default;
+    }
+
+    /* Ajuste do Texto Informativo */
+    .text-muted strong {
+        color: #1f2937;
+        /* Um pouco mais escuro para destaque */
+        font-weight: 600;
+    }

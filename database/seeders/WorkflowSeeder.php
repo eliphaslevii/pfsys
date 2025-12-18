@@ -14,93 +14,159 @@ class WorkflowSeeder extends Seeder
 {
     public function run(): void
     {
-        // =====================
-        // 1) Setores e Níveis
-        // =====================
-
-        $sectorComercial  = Sector::firstWhere('name', 'Comercial');
-        $sectorFinanceiro = Sector::firstWhere('name', 'Financeiro');
-        $sectorLogistica  = Sector::firstWhere('name', 'Logística');
-
-        $levelComercial  = Level::firstWhere('name', 'Funcionário Comercial');
-        $levelFinanceiro = Level::firstWhere('name', 'Funcionário Financeiro');
-        $levelLogistica  = Level::firstWhere('name', 'Funcionário Logística');
-
-        // =====================
-        // 2) Criar Process Types
-        // =====================
-
-        $recusa = ProcessType::firstOrCreate(
-            ['name' => 'Recusa'],
-            ['description' => 'Processo de recusa de mercadoria / NF']
-        );
-
-        $devolucao = ProcessType::firstOrCreate(
-            ['name' => 'Devolução'],
-            ['description' => 'Processo de devolução de mercadoria / NF']
-        );
-
-        // =====================
-        // 3) Motivos (tudo duplicado)
-        // =====================
-
-        $motivos = [
-            'Devolução total',
-            'Devolução parcial',
-            'Material Descartado',
-            'Devolução + sucateamento',
-            'Retorno de Material para a PFERD',
-            'Somente ajuste de estoque',
-            'Baixa financeira',
-            'Retorno de Material para a PFERD + Transporte PFERD',
-            'Retorno de Material para a PFERD + Transporte CLIENTE',
-            'Produto errado',
-            'Faturamento sem autorização',
-            'Duplicidade',
-            'Produto avariado',
-            'Erro de NF',
-            'Outros',
+        /* =====================
+         * SETORES / NÍVEIS
+         * ===================== */
+        $sectors = [
+            'Comercial'  => Sector::firstWhere('name', 'Comercial'),
+            'Financeiro' => Sector::firstWhere('name', 'Financeiro'),
+            'Logística'  => Sector::firstWhere('name', 'Logística'),
         ];
+
+        $levels = [
+            8 => Level::where('level', 8)->first(),
+            7 => Level::where('level', 7)->first(),
+            2 => Level::where('level', 2)->first(),
+        ];
+
+        /* =====================
+         * TIPOS DE PROCESSO
+         * ===================== */
+        $recusa = ProcessType::firstOrCreate(['name' => 'Recusa']);
+        $devolucao = ProcessType::firstOrCreate(['name' => 'Devolução']);
 
         $processTypes = [$recusa, $devolucao];
 
-        foreach ($processTypes as $type) {
+        /* =====================
+         * DEFINIÇÃO DOS FLUXOS
+         * ===================== */
+        $flows = [
 
-            // Template genérico
-            $template = WorkflowTemplate::firstOrCreate(
-                ['name' => 'Fluxo Genérico - '.$type->name, 'process_type_id' => $type->id],
-                ['is_active' => true]
-            );
+            /* 🔴 SUCATEAMENTO */
+            [
+                'name' => 'Fluxo Sucateamento',
+                'motivos' => [
+                    'Material Descartado',
+                    'Devolução + sucateamento',
+                ],
+                'steps' => [
+                    ['Comercial', 8],
+                    ['Financeiro', 2],
+                    ['Logística', 7],
+                    ['Financeiro (Pós-Logística)', 2],
+                    ['Logística (Refaturamento)', 7],
+                    ['Financeiro 2', 2],
+                    ['Finalizado', null],
+                ],
+            ],
 
-            // Motivos duplicados para cada tipo
-            foreach ($motivos as $motivo) {
-                WorkflowReason::firstOrCreate([
-                    'name' => $motivo,
-                    'workflow_template_id' => $template->id
+            /* 🟡 SIMPLES */
+            [
+                'name' => 'Fluxo Simples',
+                'motivos' => [
+                    'Somente ajuste de estoque',
+                    'Baixa financeira',
+                    'Somente Emissão de nova nota fiscal',
+                ],
+                'steps' => [
+                    ['Comercial', 8],
+                    ['Financeiro', 2],
+                    ['Logística', 7],
+                    ['Financeiro 2', 2],
+                    ['Finalizado', null],
+                ],
+            ],
+
+            /* 🔵 TRANSPORTE PFERD */
+            [
+                'name' => 'Fluxo Transporte PFERD',
+                'motivos' => [
+                    'Retorno de Material para a PFERD + Transporte PFERD',
+                ],
+                'steps' => [
+                    ['Comercial', 8],
+                    ['Logística (Agendar Coleta)', 7],
+                    ['Logística (Aguardando Recebimento)', 7],
+                    ['Financeiro', 2],
+                    ['Logística', 7],
+                    ['Financeiro 2', 2],
+                    ['Finalizado', null],
+                ],
+            ],
+
+            /* 🟣 TRANSPORTE CLIENTE */
+            [
+                'name' => 'Fluxo Transporte CLIENTE',
+                'motivos' => [
+                    'Retorno de Material para a PFERD + Transporte CLIENTE',
+                ],
+                'steps' => [
+                    ['Comercial', 8],
+                    ['Logística (Aguardando Recebimento)', 7],
+                    ['Financeiro', 2],
+                    ['Logística', 7],
+                    ['Financeiro 2', 2],
+                    ['Finalizado', null],
+                ],
+            ],
+
+            /* ⚪ PADRÃO */
+            [
+                'name' => 'Fluxo Padrão',
+                'motivos' => [
+                    'Emissão de nova nota fiscal + reentrega',
+                    'Retorno do material para a PFERD',
+                    'Retorno de material para PFERD + Envio de nova remessa',
+                ],
+                'steps' => [
+                    ['Comercial', 8],
+                    ['Financeiro', 2],
+                    ['Logística', 7],
+                    ['Comercial (Refaturamento)', 8],
+                    ['Logística (Refaturado)', 7],
+                    ['Financeiro 2', 2],
+                    ['Finalizado', null],
+                ],
+            ],
+        ];
+
+        /* =====================
+         * CRIAÇÃO EFETIVA
+         * ===================== */
+        foreach ($flows as $flow) {
+
+            foreach ($processTypes as $type) {
+
+                $template = WorkflowTemplate::firstOrCreate([
+                    'name' => $flow['name'].' - '.$type->name,
+                    'process_type_id' => $type->id,
+                ], [
+                    'is_active' => true,
                 ]);
-            }
 
-            // Passos básicos
-            $steps = [
-                ['Comercial',  $sectorComercial,  $levelComercial],
-                ['Financeiro', $sectorFinanceiro, $levelFinanceiro],
-                ['Logística',  $sectorLogistica,  $levelLogistica],
-                ['Finalizado', null, null],
-            ];
-
-            foreach ($steps as $index => $step) {
-                WorkflowStep::firstOrCreate(
-                    [
+                foreach ($flow['motivos'] as $motivo) {
+                    WorkflowReason::firstOrCreate([
+                        'name' => $motivo,
                         'workflow_template_id' => $template->id,
-                        'order' => $index + 1
-                    ],
-                    [
-                        'name' => $step[0],
-                        'sector_id' => $step[1]->id ?? null,
-                        'required_level_id' => $step[2]->id ?? null,
-                        'auto_notify' => true
-                    ]
-                );
+                    ]);
+                }
+
+                foreach ($flow['steps'] as $order => [$stepName, $requiredLevel]) {
+
+                    $sectorKey = strtok($stepName, ' ');
+
+                    WorkflowStep::firstOrCreate([
+                        'workflow_template_id' => $template->id,
+                        'order' => $order + 1,
+                    ], [
+                        'name' => $stepName,
+                        'sector_id' => $sectors[$sectorKey]->id ?? null,
+                        'required_level_id' => $requiredLevel
+                            ? $levels[$requiredLevel]?->id
+                            : null,
+                        'auto_notify' => true,
+                    ]);
+                }
             }
         }
     }

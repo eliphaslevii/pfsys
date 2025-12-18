@@ -32,12 +32,7 @@ class ReturnProcess extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function items()
-    {
-        return $this->hasMany(ProcessItem::class, 'process_id');
-    }
-
-    public function logs()
+      public function logs()
     {
         return $this->hasMany(ProcessLog::class, 'process_id');
     }

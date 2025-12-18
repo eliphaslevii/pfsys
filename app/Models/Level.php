@@ -33,9 +33,13 @@ class Level extends Model // CORREÇÃO: Deve ser "Level", não "Sector"
     /**
      * Permissões associadas a este Nível via tabela pivot.
      */
-    public function permissions(): BelongsToMany
+    public function permissions()
     {
-        // Assume que a tabela pivot é 'level_permission' (padrão do Laravel)
-        return $this->belongsToMany(Permission::class);
+        return $this->belongsToMany(
+            Permission::class,
+            'level_permission',
+            'level_id',
+            'permission_id'
+        );
     }
 }

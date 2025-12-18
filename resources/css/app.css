@@ -1,6 +1,3 @@
 /* --- 1️⃣ Tabler (já inclui Bootstrap CSS) --- */
 @import "@tabler/core/dist/css/tabler.min.css";
 @import "./styles.css";
-/* --- 2️⃣ Tailwind, mas sem reset global --- */
-@tailwind components;
-@tailwind utilities;
