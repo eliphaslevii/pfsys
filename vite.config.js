@@ -26,6 +26,7 @@ export default defineConfig({
         "resources/js/comercial/recusa-create.js",
         "resources/js/comercial/devolucao-create.js",
         "resources/js/comercial/process-table.js",
+        "resources/js/comercial/workflow-fields.js",
       ],
       refresh: true,
     }),

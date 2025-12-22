@@ -18,6 +18,8 @@ use App\Http\Controllers\Nfe\NfeEspelhoController;
 use App\Http\Controllers\Comercial\RecusaController;
 use App\Http\Controllers\Comercial\DevolucaoController;
 use App\Http\Controllers\Comercial\ProcessosController;
+use App\Models\Process;
+
 // =====================================================
 // 🔐 Página inicial → Login
 // =====================================================
@@ -139,14 +141,13 @@ Route::prefix('logistica/agendamentos')->group(function () {
     Route::post('/', [AgendamentoLogisticaController::class, 'store'])
         ->name('logistica.agendamentos.store');
 });
-
 Route::prefix('comercial')
     ->middleware('auth')
     ->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | DASHBOARD (LEGADO)
+        | DASHBOARD / ENTRADA (LEGADO)
         |--------------------------------------------------------------------------
         */
         Route::get('/processes', [ReturnProcessController::class, 'index'])
@@ -154,7 +155,7 @@ Route::prefix('comercial')
 
         /*
         |--------------------------------------------------------------------------
-        | PROCESSOS (LISTAGEM + WORKFLOW)
+        | PROCESSOS — LISTAGEM + WORKFLOW
         |--------------------------------------------------------------------------
         */
         Route::prefix('processes')->group(function () {
@@ -175,6 +176,14 @@ Route::prefix('comercial')
             Route::post('/{process}/approve', [ProcessosController::class, 'approve'])
                 ->name('processes.approve');
 
+            // ▶️ Avançar etapa (workflow)
+            Route::post('/{process}/advance', [ProcessosController::class, 'advance'])
+                ->name('processes.advance');
+
+            // ❌ Recusar processo (Fiscal)
+            Route::post('/{process}/reject', [ProcessosController::class, 'reject'])
+                ->name('processes.reject');
+
             // 🗑️ Excluir processo
             Route::delete('/{process}', [ProcessosController::class, 'destroy'])
                 ->name('processes.destroy');
@@ -182,7 +191,7 @@ Route::prefix('comercial')
 
         /*
         |--------------------------------------------------------------------------
-        | RECUSA
+        | RECUSA — CRIAÇÃO
         |--------------------------------------------------------------------------
         */
         Route::get('/recusa/create', [RecusaController::class, 'create'])
@@ -193,7 +202,7 @@ Route::prefix('comercial')
 
         /*
         |--------------------------------------------------------------------------
-        | DEVOLUÇÃO
+        | DEVOLUÇÃO — CRIAÇÃO
         |--------------------------------------------------------------------------
         */
         Route::get('/devolucao/create', [DevolucaoController::class, 'create'])

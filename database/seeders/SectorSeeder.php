@@ -20,11 +20,11 @@ class SectorSeeder extends Seeder
             ],
             [
                 'name' => 'Fiscal',
-                'description' => 'Emissão, análise e correção de notas fiscais.'
+                'description' => 'Emissão, análise, recusa e correção de notas fiscais.'
             ],
             [
-                'name' => 'Financeiro',
-                'description' => 'Faturamento, crédito, cobrança e baixas financeiras.'
+                'name' => 'Contas a Pagar',
+                'description' => 'Baixas financeiras, pagamentos, comunicação com cliente.'
             ],
             [
                 'name' => 'Administrativo',
@@ -38,6 +38,9 @@ class SectorSeeder extends Seeder
                 $sector
             );
         }
+
+        // ❌ REMOVE SETOR ANTIGO (SE EXISTIR)
+        Sector::where('name', 'Financeiro')->delete();
 
         echo "✅ Sectors atualizados corretamente.\n";
     }

@@ -87,4 +87,9 @@ class User extends Authenticatable
     {
         return $this->hasPermission($permission);
     }
+
+    public function workflowNotificationSteps()
+    {
+        return $this->belongsToMany(WorkflowStep::class, 'workflow_step_user');
+    }
 }

@@ -49,7 +49,7 @@ return new class extends Migration {
             $table->foreignId('workflow_template_id')
                 ->constrained('workflow_templates')
                 ->cascadeOnDelete();
-            
+
             $table->string('name', 255);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
@@ -136,9 +136,9 @@ return new class extends Migration {
             $table->string('cliente_nome')->nullable();
             $table->string('cliente_cnpj', 20)->nullable();
             $table->string('responsavel', 150)->nullable();
-            
+
             // Campos de texto para histórico ou fallback
-            $table->string('motivo')->nullable(); 
+            $table->string('motivo')->nullable();
             $table->string('codigo_erro')->nullable();
 
             /* --- DOCUMENTOS FISCAIS --- */
@@ -233,6 +233,23 @@ return new class extends Migration {
 
             $table->timestamps();
         });
+
+        Schema::create('workflow_step_user', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('workflow_step_id')
+                ->constrained('workflow_steps')
+                ->cascadeOnDelete();
+
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
+            $table->timestamps();
+
+            // evita duplicação do mesmo usuário na mesma etapa
+            $table->unique(['workflow_step_id', 'user_id']);
+        });
     }
 
     public function down(): void
@@ -246,5 +263,7 @@ return new class extends Migration {
         Schema::dropIfExists('workflow_reasons'); // Reasons dependem de Templates
         Schema::dropIfExists('workflow_templates');
         Schema::dropIfExists('process_types');
+        Schema::dropIfExists('workflow_step_user');
+
     }
 };

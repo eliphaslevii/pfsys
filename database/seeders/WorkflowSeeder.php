@@ -5,169 +5,169 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\ProcessType;
 use App\Models\WorkflowTemplate;
-use App\Models\WorkflowReason;
 use App\Models\WorkflowStep;
+use App\Models\WorkflowReason;
 use App\Models\Sector;
-use App\Models\Level;
+use Illuminate\Support\Facades\DB;
 
 class WorkflowSeeder extends Seeder
 {
     public function run(): void
     {
-        /* =====================
-         * SETORES / NÍVEIS
-         * ===================== */
-        $sectors = [
-            'Comercial'  => Sector::firstWhere('name', 'Comercial'),
-            'Financeiro' => Sector::firstWhere('name', 'Financeiro'),
-            'Logística'  => Sector::firstWhere('name', 'Logística'),
-        ];
+        DB::transaction(function () {
 
-        $levels = [
-            8 => Level::where('level', 8)->first(),
-            7 => Level::where('level', 7)->first(),
-            2 => Level::where('level', 2)->first(),
-        ];
+            $recusaType = ProcessType::where('name', 'Recusa')->firstOrFail();
 
-        /* =====================
-         * TIPOS DE PROCESSO
-         * ===================== */
-        $recusa = ProcessType::firstOrCreate(['name' => 'Recusa']);
-        $devolucao = ProcessType::firstOrCreate(['name' => 'Devolução']);
+            /*
+            |--------------------------------------------------------------------------
+            | WORKFLOW TEMPLATES
+            |--------------------------------------------------------------------------
+            */
+            $templates = [
 
-        $processTypes = [$recusa, $devolucao];
-
-        /* =====================
-         * DEFINIÇÃO DOS FLUXOS
-         * ===================== */
-        $flows = [
-
-            /* 🔴 SUCATEAMENTO */
-            [
-                'name' => 'Fluxo Sucateamento',
-                'motivos' => [
-                    'Material Descartado',
-                    'Devolução + sucateamento',
+                'Fluxo Especial - Sucateamento' => [
+                    'motivos' => [
+                        'Material Descartado',
+                        'Devolução + sucateamento',
+                    ],
+                    'steps' => [
+                        'Comercial',
+                        'Fiscal',
+                        'Logística',
+                        'Fiscal (Pós-Logística)',
+                        'Logística (Refaturamento)',
+                        'Contas a Pagar',
+                        'Finalizado',
+                    ],
                 ],
-                'steps' => [
-                    ['Comercial', 8],
-                    ['Financeiro', 2],
-                    ['Logística', 7],
-                    ['Financeiro (Pós-Logística)', 2],
-                    ['Logística (Refaturamento)', 7],
-                    ['Financeiro 2', 2],
-                    ['Finalizado', null],
-                ],
-            ],
 
-            /* 🟡 SIMPLES */
-            [
-                'name' => 'Fluxo Simples',
-                'motivos' => [
-                    'Somente ajuste de estoque',
-                    'Baixa financeira',
-                    'Somente Emissão de nova nota fiscal',
+                'Fluxo Especial - Ajuste / Baixa' => [
+                    'motivos' => [
+                        'Retorno de Material para a PFERD',
+                        'Somente ajuste de estoque',
+                        'Baixa financeira',
+                    ],
+                    'steps' => [
+                        'Comercial',
+                        'Fiscal',
+                        'Logística',
+                        'Contas a Pagar',
+                        'Finalizado',
+                    ],
                 ],
-                'steps' => [
-                    ['Comercial', 8],
-                    ['Financeiro', 2],
-                    ['Logística', 7],
-                    ['Financeiro 2', 2],
-                    ['Finalizado', null],
-                ],
-            ],
 
-            /* 🔵 TRANSPORTE PFERD */
-            [
-                'name' => 'Fluxo Transporte PFERD',
-                'motivos' => [
-                    'Retorno de Material para a PFERD + Transporte PFERD',
+                'Fluxo Especial - Transporte PFERD' => [
+                    'motivos' => [
+                        'Retorno de Material para a PFERD + Transporte PFERD',
+                    ],
+                    'steps' => [
+                        'Comercial',
+                        'Logística (Agendar Coleta)',
+                        'Logística (Aguardando Recebimento)',
+                        'Fiscal',
+                        'Logística',
+                        'Contas a Pagar',
+                        'Finalizado',
+                    ],
                 ],
-                'steps' => [
-                    ['Comercial', 8],
-                    ['Logística (Agendar Coleta)', 7],
-                    ['Logística (Aguardando Recebimento)', 7],
-                    ['Financeiro', 2],
-                    ['Logística', 7],
-                    ['Financeiro 2', 2],
-                    ['Finalizado', null],
+
+                'Fluxo Especial - Transporte Cliente' => [
+                    'motivos' => [
+                        'Retorno de Material para a PFERD + Transporte CLIENTE',
+                    ],
+                    'steps' => [
+                        'Comercial',
+                        'Logística (Aguardando Recebimento)',
+                        'Fiscal',
+                        'Logística',
+                        'Contas a Pagar',
+                        'Finalizado',
+                    ],
                 ],
-            ],
 
-            /* 🟣 TRANSPORTE CLIENTE */
-            [
-                'name' => 'Fluxo Transporte CLIENTE',
-                'motivos' => [
-                    'Retorno de Material para a PFERD + Transporte CLIENTE',
+                'Fluxo Padrão - Recusa' => [
+                    'motivos' => [
+                        'Emissão de nova nota fiscal + reentrega',
+                        'Somente Emissão de nova nota fiscal',
+                    ],
+                    'steps' => [
+                        'Comercial',
+                        'Fiscal',
+                        'Logística',
+                        'Comercial (Refaturamento)',
+                        'Logística (Refaturado)',
+                        'Contas a Pagar',
+                        'Finalizado',
+                    ],
                 ],
-                'steps' => [
-                    ['Comercial', 8],
-                    ['Logística (Aguardando Recebimento)', 7],
-                    ['Financeiro', 2],
-                    ['Logística', 7],
-                    ['Financeiro 2', 2],
-                    ['Finalizado', null],
-                ],
-            ],
+            ];
 
-            /* ⚪ PADRÃO */
-            [
-                'name' => 'Fluxo Padrão',
-                'motivos' => [
-                    'Emissão de nova nota fiscal + reentrega',
-                    'Retorno do material para a PFERD',
-                    'Retorno de material para PFERD + Envio de nova remessa',
-                ],
-                'steps' => [
-                    ['Comercial', 8],
-                    ['Financeiro', 2],
-                    ['Logística', 7],
-                    ['Comercial (Refaturamento)', 8],
-                    ['Logística (Refaturado)', 7],
-                    ['Financeiro 2', 2],
-                    ['Finalizado', null],
-                ],
-            ],
-        ];
+            foreach ($templates as $templateName => $config) {
 
-        /* =====================
-         * CRIAÇÃO EFETIVA
-         * ===================== */
-        foreach ($flows as $flow) {
+                $template = WorkflowTemplate::updateOrCreate(
+                    [
+                        'name' => $templateName,
+                        'process_type_id' => $recusaType->id,
+                    ],
+                    [
+                        'is_active' => true,
+                    ]
+                );
 
-            foreach ($processTypes as $type) {
+                /*
+                |--------------------------------------------------------------------------
+                | STEPS
+                |--------------------------------------------------------------------------
+                */
+                $order = 1;
 
-                $template = WorkflowTemplate::firstOrCreate([
-                    'name' => $flow['name'].' - '.$type->name,
-                    'process_type_id' => $type->id,
-                ], [
-                    'is_active' => true,
-                ]);
+                foreach ($config['steps'] as $stepName) {
 
-                foreach ($flow['motivos'] as $motivo) {
-                    WorkflowReason::firstOrCreate([
-                        'name' => $motivo,
-                        'workflow_template_id' => $template->id,
-                    ]);
+                    $sectorName =
+                        str_contains($stepName, 'Fiscal')
+                            ? 'Fiscal'
+                            : (str_contains($stepName, 'Logística')
+                                ? 'Logística'
+                                : (str_contains($stepName, 'Comercial')
+                                    ? 'Comercial'
+                                    : (str_contains($stepName, 'Contas')
+                                        ? 'Contas a Pagar'
+                                        : null)));
+
+                    $sector = $sectorName
+                        ? Sector::where('name', $sectorName)->first()
+                        : null;
+
+                    WorkflowStep::updateOrCreate(
+                        [
+                            'workflow_template_id' => $template->id,
+                            'name' => $stepName,
+                        ],
+                        [
+                            'order' => $order++,
+                            'sector_id' => $sector?->id,
+                            'required_level_id' => null, // nível legado removido
+                        ]
+                    );
                 }
 
-                foreach ($flow['steps'] as $order => [$stepName, $requiredLevel]) {
-
-                    $sectorKey = strtok($stepName, ' ');
-
-                    WorkflowStep::firstOrCreate([
-                        'workflow_template_id' => $template->id,
-                        'order' => $order + 1,
-                    ], [
-                        'name' => $stepName,
-                        'sector_id' => $sectors[$sectorKey]->id ?? null,
-                        'required_level_id' => $requiredLevel
-                            ? $levels[$requiredLevel]?->id
-                            : null,
-                        'auto_notify' => true,
-                    ]);
+                /*
+                |--------------------------------------------------------------------------
+                | MOTIVOS
+                |--------------------------------------------------------------------------
+                */
+                foreach ($config['motivos'] as $motivoName) {
+                    WorkflowReason::updateOrCreate(
+                        [
+                            'workflow_template_id' => $template->id,
+                            'name' => $motivoName,
+                        ],
+                        [
+                            'is_active' => true,
+                        ]
+                    );
                 }
             }
-        }
+        });
     }
 }

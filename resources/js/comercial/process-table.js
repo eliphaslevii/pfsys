@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.querySelector('#processTable tbody');
     const btnRefresh = document.getElementById('btnRefresh');
     const paginationContainer = document.getElementById('pagination');
+    window.notyf = window.notyf || new Notyf({
+        duration: 2500,
+        position: { x: 'right', y: 'top' }
+    });
 
     let currentPage = 1;
 
@@ -84,6 +88,33 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
     `;
         }
+        function renderAdvanceButton(p) {
+            if (!p.current_step || !p.can_advance) return '';
+
+            return `
+        <button
+            class="btn btn-sm btn-warning btn-advance"
+            data-id="${p.id}"
+            data-step="${p.current_step}"
+            title="Avançar etapa">
+            <i class="ti ti-arrow-right"></i>
+        </button>
+    `;
+        }
+
+        function renderRejectButton(p) {
+            // Fiscal é a etapa chamada "Financeiro"
+            if (p.current_step !== 'Fiscal') return '';
+
+            return `
+        <button
+            class="btn btn-sm btn-danger btn-reject"
+            data-id="${p.id}"
+            title="Recusar processo">
+            <i class="ti ti-x"></i>
+        </button>
+    `;
+        }
 
         data.forEach(p => {
             tableBody.insertAdjacentHTML('beforeend', `
@@ -115,19 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="text-end">
                         <div class="d-flex justify-content-end gap-1">
 
+                            ${renderRejectButton(p)}
                             ${renderApproveButton(p)}
+                            ${renderAdvanceButton(p)}
                             ${renderDeleteButton(p)}
 
                             <button class="btn btn-sm btn-outline-primary btn-view"
                                 data-id="${p.id}"
                                 title="Visualizar processo">
                                 <i class="ti ti-eye"></i>
-                            </button>
-
-                            <button class="btn btn-sm btn-outline-secondary btn-workflow"
-                                data-id="${p.id}"
-                                title="Ações do workflow">
-                                <i class="ti ti-route"></i>
                             </button>
                         </div>
                     </td>
@@ -192,36 +219,59 @@ document.addEventListener('DOMContentLoaded', () => {
      * =============================== */
     function preencherModal(data) {
         const p = data.process;
+        const pd = data.process_data || {}; // 🔥 ESSA LINHA FALTAVA
 
+        /* ================= CLIENTE ================= */
         set('det-cliente-nome', p.cliente_nome);
         set('det-cliente-cnpj', formatCnpj(p.cliente_cnpj));
 
+        /* ================= FISCAL ================= */
         set('det-nfd', p.nfd ?? '-');
         set('det-nf-saida', p.nf_saida ?? '-');
         set('det-nf-devolucao', p.nf_devolucao ?? '-');
         set('det-nfo', p.nfo ?? '-');
         set('det-nprot', p.nprot ?? '-');
 
+        /* ================= PROCESSO ================= */
         set('det-motivo', p.motivo);
         set('det-codigo-erro', p.codigo_erro ?? '-');
         set('det-status', p.status);
         set('det-etapa', p.etapa);
 
+        /* ================= 🔥 DADOS DO FLUXO 🔥 ================= */
+        set('wf-delivery-display', pd.delivery ?? '-');
+        set('wf-doc-fat-display', pd.doc_faturamento ?? '-');
+        set('wf-ordem-display', pd.ordem_entrada ?? '-');
+        set('wf-migo-display', pd.migo ?? '-');
+
+        /* ================= ITENS ================= */
         const tbody = document.getElementById('det-itens-body');
         tbody.innerHTML = '';
 
+        if (!data.itens?.length) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                    Nenhum item encontrado
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
         data.itens.forEach(item => {
             tbody.insertAdjacentHTML('beforeend', `
-                <tr>
-                    <td>${item.artigo}</td>
-                    <td>${item.descricao}</td>
-                    <td>${item.ncm ?? '-'}</td>
-                    <td>${item.quantidade}</td>
-                    <td>${item.preco_unitario}</td>
-                </tr>
-            `);
+            <tr>
+                <td>${item.artigo}</td>
+                <td>${item.descricao}</td>
+                <td>${item.ncm ?? '-'}</td>
+                <td>${item.quantidade}</td>
+                <td>${item.preco_unitario}</td>
+            </tr>
+        `);
         });
     }
+
 
     /* ===============================
      * HELPERS
@@ -409,3 +459,65 @@ document.getElementById('btnConfirmDelete')
             });
     });
 
+/* ===============================
+ * AVANÇAR ETAPA — ANTI DOUBLE CLICK
+ * =============================== */
+
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-advance');
+    if (!btn) return;
+
+    // ❌ NÃO AVANÇA AQUI
+    // ❌ NÃO FAZ FETCH AQUI
+
+    processToAdvance = btn.dataset.id;
+    currentStepName = btn.dataset.step;
+
+    montarModalEtapa(currentStepName);
+
+
+    new bootstrap.Modal(
+        document.getElementById('modal-advance')
+    ).show();
+});
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-reject');
+    if (!btn) return;
+
+    window.processToReject = btn.dataset.id;
+
+    new bootstrap.Modal(
+        document.getElementById('modal-reject')
+    ).show();
+});
+
+document.getElementById('btnConfirmReject')
+    .addEventListener('click', () => {
+
+        const comment = document
+            .getElementById('rejectComment')
+            .value.trim();
+
+        if (!comment) {
+            return notyf.error('Informe o motivo da recusa.');
+        }
+
+        fetch(`/comercial/processes/${window.processToReject}/reject`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ comment })
+        })
+            .then(r => r.json())
+            .then(res => {
+                notyf.success(res.message);
+                setTimeout(() => location.reload(), 400);
+            })
+            .catch(() => {
+                notyf.error('Erro ao recusar processo');
+            });
+    });

@@ -103,7 +103,6 @@ $context = $context ?? 'default';
                                 <th>Artigo</th>
                                 <th>Descrição</th>
                                 <th class="d-none d-md-table-cell">NCM</th>
-                                <th class="d-none d-lg-table-cell">NF Saída</th>
                                 <th class="text-end">Qtd.</th>
                                 <th class="text-end">Preço</th>
                             </tr>

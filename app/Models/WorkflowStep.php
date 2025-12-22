@@ -18,31 +18,31 @@ class WorkflowStep extends Model
         'rules_json'
     ];
 
-    /** 🔹 Setor responsável */
+    /** 🔹 Setor responsável pela etapa */
     public function sector()
     {
         return $this->belongsTo(Sector::class);
     }
 
-    /** 🔹 Nível obrigatório */
+    /** 🔹 Nível mínimo para atuar na etapa */
     public function requiredLevel()
     {
         return $this->belongsTo(Level::class, 'required_level_id');
     }
 
-    /** 🔹 Workflow Template */
+    /** 🔹 Template do workflow */
     public function template()
     {
         return $this->belongsTo(WorkflowTemplate::class, 'workflow_template_id');
     }
 
-    /** 🔹 Próximo passo (caso aprovado) */
+    /** 🔹 Próxima etapa (aprovação) */
     public function nextStep()
     {
         return $this->belongsTo(WorkflowStep::class, 'next_step_id');
     }
 
-    /** 🔹 Próximo passo caso rejeitado */
+    /** 🔹 Próxima etapa (rejeição) */
     public function nextOnReject()
     {
         return $this->belongsTo(WorkflowStep::class, 'next_on_reject_step_id');
